@@ -33,14 +33,14 @@ Environment variables:
 | ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
 | **file_path**<br />_(\* required)_        |  -      | relative path to audio file from **ROOT_DIR** (`{ROOT_DIR}/{file_path}`) |
 | **output_path**<br />_(\* required)_      |  -      | relative path where the modified audio will be saved from **ROOT_DIR** (`{ROOT_DIR}/{output_path}`) |
-| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | a list of documents |
-| **min_amplitude**                         | **MIN_AMPLITUDE** | a list of documents |
+| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
+| **min_amplitude**                         | **MIN_AMPLITUDE** | minimum amplitude |
 
 - Return:
 
 | Name     | Description                                     |
 | --------------- | ----------------------------------------------- |
-| **status**      | message (`process started`)                     | 
+| **status**      | message  | 
 
 Progress of process for the given audio file can be checked by calling `job_status`. 
 
