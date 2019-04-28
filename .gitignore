@@ -9,4 +9,5 @@ build
 *.egg-info
 dist
 
-Voice
+Voicesample_audio/*_efit.wav 
+sample_audio/*_edit.wav 
