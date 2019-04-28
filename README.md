@@ -1,5 +1,5 @@
 # Audio file editor
-Python audio file editing library implemented. 
+Python audio file editing library 
 
 ## Get started
 ```
