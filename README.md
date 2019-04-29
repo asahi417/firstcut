@@ -21,7 +21,6 @@ Environment variables:
 | **PORT**                   | `7001`  | port to host the server on                                                                          |
 | **MIN_INTERVAL_SEC**       | `0.2`   | default value of `min_interval_sec`     |
 | **MIN_AMPLITUDE**          | `0.1`   | default value of `min_amplitude`     |
-| **ROOT_DIR**               | `{HOME}` | root dir of audio files  |
 
 
 ### `wav_truncation`
@@ -31,8 +30,8 @@ Environment variables:
 
 | Parameter name                            | Default | Description                                                                         |
 | ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| **file_path**<br />_(\* required)_        |  -      | relative path to audio file from **ROOT_DIR** (`{ROOT_DIR}/{file_path}`) |
-| **output_path**<br />_(\* required)_      |  -      | relative path where the modified audio will be saved from **ROOT_DIR** (`{ROOT_DIR}/{output_path}`) |
+| **file_path**<br />_(\* required)_        |  -      | absolute path or url to fetch audio file  |
+| **output_path**<br />_(\* required)_      |  -      | absolute path where the modified audio will be saved |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **min_amplitude**                         | **MIN_AMPLITUDE** | minimum amplitude |
 

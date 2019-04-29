@@ -4,14 +4,15 @@ import traceback
 import os
 
 from flask import Flask, request, jsonify
-from werkzeug.exceptions import BadRequest
+# from werkzeug.exceptions import BadRequest
 
 app = Flask(__name__)
 
 PORT = int(os.getenv("PORT", "7001"))
-ROOT_DIR = os.getenv("ROOT_DIR", os.path.expanduser("~"))
+# ROOT_DIR = os.getenv("ROOT_DIR", os.path.expanduser("~"))
 MIN_INTERVAL_SEC = float(os.getenv("PORT", "0.2"))
 MIN_AMPLITUDE = float(os.getenv("MIN_AMPLITUDE", "0.1"))
+TMP_DOWNLOAD_FILE = './tmp_download.wav'
 
 
 class Status:
@@ -62,6 +63,9 @@ def main():
                 os.makedirs(os.path.dirname(path_to_save), exist_ok=True)
             audio_editor.write_audio(path_to_save, audio_signal_edit, freq, file_format=file_format)
             job_status.close()
+            if os.path.exists(TMP_DOWNLOAD_FILE):
+                logger.info('delete downloaded file: %s' % TMP_DOWNLOAD_FILE)
+                os.system('rm -rf %s' % TMP_DOWNLOAD_FILE)
         except Exception:
             msg = traceback.format_exc()
             logger.error(msg)
@@ -80,43 +84,81 @@ def main():
         logger.info('new request')
 
         if request.method != "POST":
-            BadRequest("Only POST method is allowed.")
+            return jsonify(status="ERROR: Bad Method `%s`. Only POST method is allowed." % request.method)
+
+        if request.headers.get("Content-Type") != 'application/json':
+            # return BadRequest("ERROR: Only application/json Content-Type is allowed.")
+            return jsonify(status="ERROR: Bad Content-Type `%s`. Only application/json Content-Type is allowed."
+                                  % request.headers)
 
         post_body = request.get_json()
+        # print(post_body is None)
 
         def required_param_validate(name):
             tmp = post_body.get(name, "")
+            is_error = False
             if tmp == "":
-                return BadRequest("Error: Parameter `%s` is required." % name)
+                is_error = True
+                msg = "Error: Parameter `%s` is required." % name
+                return msg, is_error
+            if tmp.startswith('http'):
+                logger.info('given file path is url: %s' % tmp)
+                os.system('wget -O %s %s' % (TMP_DOWNLOAD_FILE, tmp))
+                tmp = TMP_DOWNLOAD_FILE
+                return tmp, is_error
             if not tmp.endswith(".wav"):
-                return BadRequest("Error: `file_path` have to be `wav` format:"
-                                  "%s is not wav file." % tmp)
+                is_error = True
+                msg = "Error: `file_path` have to be `wav` format: %s is not wav file." % tmp
+                return msg, is_error
             logger.info(' - %s: %s' % (name, str(tmp)))
-            return tmp
+            return tmp, is_error
 
         def param_validate(name, default, min_val, max_val, data_type=float):
             param_value = post_body.get(name, default)
+            is_error = False
             if param_value is None:
                 return param_value
 
             try:
                 numeric_val = data_type(param_value)
             except ValueError:
-                return BadRequest(
-                    f'Param "{name}" must be a numeric value '
-                    f"between {min_val} and {max_val}"
-                )
+                msg = f'Param "{name}" must be a numeric value between "{min_val}" and "{max_val}"'
+                is_error = True
+                return msg, is_error
+
             if numeric_val > max_val or numeric_val < min_val:
-                return BadRequest(f'Param "{name}" must be between {min_val} and {max_val}')
+                msg = f'Param "{name}" must be between {min_val} and {max_val}'
+                is_error = True
+                return msg, is_error
 
             logger.info(' - %s: %s' % (name, str(numeric_val)))
-            return numeric_val
+            return numeric_val, is_error
 
         logger.info('parameters')
-        file_path = os.path.join(ROOT_DIR, required_param_validate('file_path'))
-        output_path = os.path.join(ROOT_DIR, required_param_validate('output_path'))
-        min_interval_sec = param_validate('min_interval_sec', MIN_INTERVAL_SEC, 0.0, 10000, float)
-        min_amplitude = param_validate('min_amplitude', MIN_AMPLITUDE, 0.0, 100, float)
+
+        output, _is_error = required_param_validate('file_path')
+        if _is_error:
+            return jsonify(status='ERROR: %s' % output)
+        else:
+            file_path = output
+
+        output, _is_error = required_param_validate('output_path')
+        if _is_error:
+            return jsonify(status='ERROR: %s' % output)
+        else:
+            output_path = output
+
+        output, _is_error = param_validate('min_interval_sec', MIN_INTERVAL_SEC, 0.0, 10000, float)
+        if _is_error:
+            return jsonify(status='ERROR: %s' % output)
+        else:
+            min_interval_sec = output
+
+        output, _is_error = param_validate('min_amplitude', MIN_AMPLITUDE, 0.0, 100, float)
+        if _is_error:
+            return jsonify(status='ERROR: %s' % output)
+        else:
+            min_amplitude = output
 
         logger.info('start process')
         thread = Thread(target=process, args=[file_path, output_path, 'wav', min_interval_sec, min_amplitude])
