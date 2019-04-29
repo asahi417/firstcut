@@ -9,10 +9,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 PORT = int(os.getenv("PORT", "7001"))
-# ROOT_DIR = os.getenv("ROOT_DIR", os.path.expanduser("~"))
+ROOT_DIR = os.path.expanduser("~")
 MIN_INTERVAL_SEC = float(os.getenv("PORT", "0.2"))
 MIN_AMPLITUDE = float(os.getenv("MIN_AMPLITUDE", "0.1"))
-TMP_DOWNLOAD_FILE = './tmp_download.wav'
+TMP_DOWNLOAD_FILE = os.path.join(ROOT_DIR, 'tmp_download.wav')
 
 
 class Status:
