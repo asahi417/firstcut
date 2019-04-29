@@ -2,7 +2,7 @@ import audio_editor
 from threading import Thread
 import traceback
 import os
-
+from time import time
 from flask import Flask, request, jsonify
 # from werkzeug.exceptions import BadRequest
 
@@ -48,7 +48,6 @@ def main():
         job_status.set_status('processing', 1)
         try:
             # load wav file
-            print(path_to_audio)
             audio_signal, freq = audio_editor.load_audio(path_to_audio,
                                                          file_format=file_format)
             # convert from second to sampling length
@@ -90,7 +89,7 @@ def main():
             # return BadRequest("ERROR: Only application/json Content-Type is allowed.")
             return jsonify(status="ERROR: Bad Content-Type `%s`. Only application/json Content-Type is allowed."
                                   % request.headers)
-
+        
         post_body = request.get_json()
         # print(post_body is None)
 
@@ -104,6 +103,15 @@ def main():
             if tmp.startswith('http'):
                 logger.info('given file path is url: %s' % tmp)
                 os.system('wget -O %s %s' % (TMP_DOWNLOAD_FILE, tmp))
+
+                start = time()
+                while True:
+                    if os.path.exists(TMP_DOWNLOAD_FILE):
+                        break
+                    if time() - start > 30:
+                        is_error = True
+                        msg = 'ERROR: Runtime error, can not download file: %s ' % TMP_DOWNLOAD_FILE
+                        return msg, is_error
                 tmp = TMP_DOWNLOAD_FILE
                 return tmp, is_error
             if not tmp.endswith(".wav"):
