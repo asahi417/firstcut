@@ -2,6 +2,7 @@ import audio_editor
 from threading import Thread
 import traceback
 import os
+import urllib.request
 from time import time
 from flask import Flask, request, jsonify
 # from werkzeug.exceptions import BadRequest
@@ -89,7 +90,7 @@ def main():
             # return BadRequest("ERROR: Only application/json Content-Type is allowed.")
             return jsonify(status="ERROR: Bad Content-Type `%s`. Only application/json Content-Type is allowed."
                                   % request.headers)
-        
+
         post_body = request.get_json()
         # print(post_body is None)
 
@@ -101,8 +102,10 @@ def main():
                 msg = "Error: Parameter `%s` is required." % name
                 return msg, is_error
             if tmp.startswith('http'):
-                logger.info('given file path is url: %s' % tmp)
-                os.system('wget -O %s %s' % (TMP_DOWNLOAD_FILE, tmp))
+                logger.info('download file from %s' % tmp)
+                # wget.download(url=tmp, out=TMP_DOWNLOAD_FILE)
+                # os.system('wget -O %s %s' % (TMP_DOWNLOAD_FILE, tmp))
+                urllib.request.urlretrieve(tmp, TMP_DOWNLOAD_FILE)
 
                 start = time()
                 while True:

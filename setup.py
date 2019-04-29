@@ -25,7 +25,8 @@ setup(
         'pandas',
         'flask',
         'werkzeug',
-        'soundfile'
+        'soundfile',
+        'urllib3'
     ]
 )
 
