@@ -1,17 +1,18 @@
-# Audio file editor
-Python audio file editing library 
+# NITRO
+Python library to edit video/audio 
 
 ## Get started
+
 ```
-git clone https://github.com/asahi417/audio_editor
-cd audio_editor
+git clone https://github.com/asahi417/nitro_editor
+cd nitro_editor
 pip install -e .
 ```
 
 ## API
 Run API server 
 ```
-python ./bin/api_audio_truncation.py
+python ./bin/api_nitro_clipping.py
 ```
 
 Environment variables:
@@ -23,9 +24,9 @@ Environment variables:
 | **MIN_AMPLITUDE**          | `0.1`   | default value of `min_amplitude`     |
 
 
-### `wav_truncation`
+### `audio_clipping`
 - Description: POST API to truncate wav audio file.
-- Endpoint: `wav_truncation`
+- Endpoint: `audio_clipping`
 - Parameters:
 
 | Parameter name                            | Default | Description                                                                         |
@@ -42,6 +43,27 @@ Environment variables:
 | **status**      | message  | 
 
 Progress of process for the given audio file can be checked by calling `job_status`. 
+
+### `video_clipping`
+- Description: POST API to truncate wav audio file.
+- Endpoint: `video_clipping`
+- Parameters:
+
+| Parameter name                            | Default | Description                                                                         |
+| ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| **file_path**<br />_(\* required)_        |  -      | absolute path or url to fetch audio file  |
+| **output_path**<br />_(\* required)_      |  -      | absolute path where the modified audio will be saved |
+| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
+| **min_amplitude**                         | **MIN_AMPLITUDE** | minimum amplitude |
+
+- Return:
+
+| Name     | Description                                     |
+| --------------- | ----------------------------------------------- |
+| **status**      | message  | 
+
+Progress of process for the given audio file can be checked by calling `job_status`. 
+
 
 ### `job_status`
 - Description: Check current job status
