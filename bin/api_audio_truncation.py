@@ -5,9 +5,12 @@ import os
 import urllib.request
 from time import time
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 # from werkzeug.exceptions import BadRequest
 
 app = Flask(__name__)
+# TODO: 本番では prod のドメインからのみアクセス可能に
+CORS(app)
 
 PORT = int(os.getenv("PORT", "7001"))
 ROOT_DIR = os.path.expanduser("~")
