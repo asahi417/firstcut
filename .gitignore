@@ -10,5 +10,6 @@ build
 dist
 
 Voice
-sample_audio/*_edit.wav 
+sample_files/*_edit.wav
+sample_files/*_edit.mp4
 ./random

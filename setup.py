@@ -6,10 +6,10 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(
-    name='audio_editor',
+    name='nitro_editor',
     version=FULL_VERSION,
     description='Library to edit audio file.',
-    url='https://github.com/asahi417/DeepDomainAdaptation',
+    url='https://github.com/asahi417',
     long_description=readme,
     author='Asahi Ushio',
     author_email='asahi1992ushio@gmail.com',
@@ -26,7 +26,8 @@ setup(
         'flask',
         'werkzeug',
         'soundfile',
-        'urllib3'
+        'urllib3',
+        'moviepy'
     ]
 )
 
