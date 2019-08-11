@@ -7,14 +7,14 @@ services:
         PORT: "8008"
         MIN_INTERVAL_SEC: "0.2"
         MIN_AMPLITUDE: "0.1"
-        FIREBASE_SERVICE_ACOUNT: ""
-        FIREBASE_APIKEY: ""
-        FIREBASE_AUTHDOMAIN: ""
-        FIREBASE_DATABASEURL: ""
-        FIREBASE_STORAGEBUCKET: ""
-        FIREBASE_GMAIL: ""
-        FIREBASE_PASSWORD: ""
+        FIREBASE_SERVICE_ACOUNT: "serviceAccountCredentials"
+        FIREBASE_APIKEY: "apiKey"
+        FIREBASE_AUTHDOMAIN: "authDomain"
+        FIREBASE_DATABASEURL: "databaseURL"
+        FIREBASE_STORAGEBUCKET: "storageBucket"
+        FIREBASE_GMAIL: "user_gmail"
+        FIREBASE_PASSWORD: "user_password"
     volumes:
-      - {path-to-credentials}:/opt/app/credentials
+      - path-to-credentials:/opt/app/credentials
     ports:
      - "8008:8008"
