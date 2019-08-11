@@ -50,14 +50,13 @@ python ./bin/api_nitro_clipping.py
 ```
 
 ## Service
-### `audio_clipping`
+### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Endpoint: `audio_clipping`
 - Parameters:
 
-| Parameter name                            | Default              | Description                                                                         |
-| ----------------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
-| **file_name**<br />_(\* required)_        |  -                   | absolute path or url to fetch audio file  |
+| Parameter name                            | Default              | Description                           |
+| ----------------------------------------- | -------------------- | ------------------------------------- |
+| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
 
 - Return:
 
@@ -66,27 +65,6 @@ python ./bin/api_nitro_clipping.py
 | **job_id** | unique job id  |
 
 Progress of process for the given audio file can be checked by calling `job_status`. 
-
-### `video_clipping`
-- Description: POST API to truncate wav audio file.
-- Endpoint: `video_clipping`
-- Parameters:
-
-| Parameter name                            | Default | Description                                                                         |
-| ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| **file_path**<br />_(\* required)_        |  -      | absolute path or url to fetch audio file  |
-| **output_path**<br />_(\* required)_      |  -      | absolute path where the modified audio will be saved |
-| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
-| **min_amplitude**                         | **MIN_AMPLITUDE** | minimum amplitude |
-
-- Return:
-
-| Name     | Description                                     |
-| --------------- | ----------------------------------------------- |
-| **status**      | message  | 
-
-Progress of process for the given audio file can be checked by calling `job_status`. 
-
 
 ### `job_status`
 - Description: GET API for job status
@@ -141,8 +119,3 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | ------------------- | --------------------- |
 | **removed_files**   | list of removed files |
 
-
-
-## Test
-
-`https://firebasestorage.googleapis.com/v0/b/mr-kilkenny.appspot.com/o/audios%2Ffarend_Diaz1.wav?alt=media&token=b8edec6c-9659-47e3-a002-98dd049b17f3`
