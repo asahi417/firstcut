@@ -28,7 +28,8 @@ setup(
         'soundfile',
         'urllib3',
         'moviepy',
-        'pyrebase'
+        'pyrebase',
+        'flask_cors'
     ]
 )
 

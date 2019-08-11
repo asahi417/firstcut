@@ -5,9 +5,11 @@ from threading import Thread
 import traceback
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError
 
 app = Flask(__name__)
+CORS(app)
 
 ROOT_DIR = os.path.expanduser("~")
 
