@@ -1,46 +1,69 @@
-# NITRO
-Python library to edit video/audio 
+# Nitro-editor
+Audio/video clipping service by detecting silent interval automatically and eliminated them from
+the original file (eg, [raw sound](./sample_files/sample_0.wav) -> [processed sound](./sample_files/sample_0_edit.wav)).
+Firebase storage is used as backend data I/O.  
 
 ## Get started
+
+Clone the repo
 
 ```
 git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
-pip install -e .
 ```
 
-## API
-Run API server 
+Nitro-editor can be built by docker-compose or pip install and launch the server manually,
+but either way requires credentials for connecting to firebase storage (see [here](./FIREBASE.md) as those credential).
+
+### Build by Dockerfile
+1. ***edit docker-composer file***  
+Add firebase credentials to [docker-compose file](./docker-compose.yml).  
+`FIREBASE_SERVICE_ACOUNT`, `FIREBASE_APIKEY`, `FIREBASE_AUTHDOMAIN`, `FIREBASE_DATABASEURL`, `FIREBASE_STORAGEBUCKET`, `FIREBASE_GMAIL`, `FIREBASE_PASSWORD`, and
+`path-to-credentials` are required.
+
+2. ***build & run docker-composer***  
 ```
-python ./bin/api_nitro_clipping.py
+docker-compose -f docker-compose.yml up       
 ```
 
+### Build by pip
+1. ***Set up environment variables***  
 Environment variables:
 
 | Environment variable name  | Default | Description                                                                                         |
 | -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| **PORT**                   | `7001`  | port to host the server on                                                                          |
-| **MIN_INTERVAL_SEC**       | `0.2`   | default value of `min_interval_sec`     |
-| **MIN_AMPLITUDE**          | `0.1`   | default value of `min_amplitude`     |
+| **PORT**                   | `8008`  | port to host the server on                                                                          |
+| **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
+| **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
+| **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
+| **FIREBASE_APIKEY**        |         | apiKey |
+| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
+| **FIREBASE_DATABASEURL**   |         | databaseURL |
+| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
+| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
+| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
 
+2. ***install & run API server***    
+```
+pip install -e .
+python ./bin/api_nitro_clipping.py
+```
 
+## Service
 ### `audio_clipping`
 - Description: POST API to truncate wav audio file.
 - Endpoint: `audio_clipping`
 - Parameters:
 
-| Parameter name                            | Default | Description                                                                         |
-| ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| **file_path**<br />_(\* required)_        |  -      | absolute path or url to fetch audio file  |
-| **output_path**<br />_(\* required)_      |  -      | absolute path where the modified audio will be saved |
-| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
-| **min_amplitude**                         | **MIN_AMPLITUDE** | minimum amplitude |
+| Parameter name                            | Default              | Description                                                                         |
+| ----------------------------------------- | -------------------- | ----------------------------------------------------------------------------------- |
+| **file_name**<br />_(\* required)_        |  -                   | absolute path or url to fetch audio file  |
 
 - Return:
 
-| Name     | Description                                     |
-| --------------- | ----------------------------------------------- |
-| **status**      | message  | 
+| Name       | Description                                     |
+| ---------- | ----------------------------------------------- |
+| **job_id** | unique job id  |
 
 Progress of process for the given audio file can be checked by calling `job_status`. 
 
@@ -66,13 +89,60 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 
 ### `job_status`
-- Description: Check current job status
-- Endpoint: `job_status`
+- Description: GET API for job status
+- Parameters:
+
+| Parameter name                  | Default | Description                                                                         |
+| ------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| **job_id**<br />_(\* required)_ |         | job id |
+
 - Return:
 
-| Name     | Description                                     |
-| --------------- | ----------------------------------------------- |
-| **status**      | job status/error message |
-| **status_code** | `0`: no job, `1`: in progress, `-1`: error |
+| return name         | Description                                     |
+| ------------------- | ----------------------------------------------- |
+| **status**          | status |
+| **status_code**     | `{'1': job in progress, '-1': error, '0': job_completed}` |
+| **elapsed_time**    | elapsed time after starting process |
+| **url**             | url for processed file (provided only the job has been completed) |
 
 
+### `job_ids`
+- Description: GET API to get list of job id
+
+- Return:
+
+| return name         | Description     |
+| ------------------- | --------------- |
+| **job_ids**         | list of job ids |
+
+
+### `drop_job_status`
+- Description: GET API to drop completed job status. Server will keep all the job status, unless you request this method. 
+
+- Return:
+
+| return name         | Description    |
+| ------------------- | -------------- |
+| **status**          | status message |
+
+### `drop_file_firebase`
+- Description: GET API to remove file on firebase 
+
+- Parameters:
+
+| Parameter name   | Default | Description                                                                         |
+| ---------------- | ------- | ----------------------------------------------------------------------------------- |
+| **file_name**    |         | file name to remove, if not provided, remove all the files |
+
+
+- Return:
+
+| return name         | Description           |
+| ------------------- | --------------------- |
+| **removed_files**   | list of removed files |
+
+
+
+## Test
+
+`https://firebasestorage.googleapis.com/v0/b/mr-kilkenny.appspot.com/o/audios%2Ffarend_Diaz1.wav?alt=media&token=b8edec6c-9659-47e3-a002-98dd049b17f3`

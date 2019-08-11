@@ -27,7 +27,8 @@ setup(
         'werkzeug',
         'soundfile',
         'urllib3',
-        'moviepy'
+        'moviepy',
+        'pyrebase'
     ]
 )
 

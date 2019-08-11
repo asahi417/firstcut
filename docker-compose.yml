@@ -1,0 +1,20 @@
+version: '2'
+services:
+  api:
+    build:
+      context: .
+      args:
+        PORT: "8008"
+        MIN_INTERVAL_SEC: "0.2"
+        MIN_AMPLITUDE: "0.1"
+        FIREBASE_SERVICE_ACOUNT: ""
+        FIREBASE_APIKEY: ""
+        FIREBASE_AUTHDOMAIN: ""
+        FIREBASE_DATABASEURL: ""
+        FIREBASE_STORAGEBUCKET: ""
+        FIREBASE_GMAIL: ""
+        FIREBASE_PASSWORD: ""
+    volumes:
+      - {path-to-credentials}:/opt/app/credentials
+    ports:
+     - "8008:8008"
