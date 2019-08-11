@@ -4,7 +4,6 @@ the original file (eg, [raw sound](./sample_files/sample_0.wav) -> [processed so
 Firebase storage is used as backend data I/O.  
 
 ## Get started
-
 Clone the repo
 
 ```
@@ -12,41 +11,12 @@ git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
 ```
 
-Nitro-editor can be built by docker-compose or pip install and launch the server manually,
-but either way requires credentials for connecting to firebase storage (see [here](./FIREBASE.md) as those credential).
+Nitro-editor requires credentials for connecting to firebase storage (see [here](./FIREBASE.md) as those credential).
+Once you had those credentials, add them to [docker-compose file](./docker-compose.yml).
+Then, build & run docker-composer.
 
-### Build by Dockerfile
-1. ***edit docker-composer file***  
-Add firebase credentials to [docker-compose file](./docker-compose.yml).  
-`FIREBASE_SERVICE_ACOUNT`, `FIREBASE_APIKEY`, `FIREBASE_AUTHDOMAIN`, `FIREBASE_DATABASEURL`, `FIREBASE_STORAGEBUCKET`, `FIREBASE_GMAIL`, `FIREBASE_PASSWORD`, and
-`path-to-credentials` are required.
-
-2. ***build & run docker-composer***  
 ```
 docker-compose -f docker-compose.yml up       
-```
-
-### Build by pip
-1. ***Set up environment variables***  
-Environment variables:
-
-| Environment variable name  | Default | Description                                                                                         |
-| -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| **PORT**                   | `8008`  | port to host the server on                                                                          |
-| **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
-| **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
-| **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
-| **FIREBASE_APIKEY**        |         | apiKey |
-| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
-| **FIREBASE_DATABASEURL**   |         | databaseURL |
-| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
-| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
-| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
-
-2. ***install & run API server***    
-```
-pip install -e .
-python ./bin/api_nitro_clipping.py
 ```
 
 ## Service
@@ -119,3 +89,30 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | ------------------- | --------------------- |
 | **removed_files**   | list of removed files |
 
+
+## Others
+### Build by pip
+Instead of build by docker-compose, one can manually build with pip and run the script to launch 
+API server
+
+1. ***Set up environment variables***  
+Environment variables:
+
+| Environment variable name  | Default | Description                                                                                         |
+| -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| **PORT**                   | `8008`  | port to host the server on                                                                          |
+| **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
+| **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
+| **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
+| **FIREBASE_APIKEY**        |         | apiKey |
+| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
+| **FIREBASE_DATABASEURL**   |         | databaseURL |
+| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
+| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
+| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
+
+2. ***install & run API server***    
+```
+pip install -e .
+python ./bin/api_nitro_clipping.py
+```
