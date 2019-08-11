@@ -11,9 +11,8 @@ git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
 ```
 
-Nitro-editor requires credentials for connecting to firebase storage (see [here](./FIREBASE.md) as those credential).
-Once you had those credentials, add them to [docker-compose file](./docker-compose.yml).
-Then, build & run docker-composer.
+[Nitro-editor requires credentials for connecting to firebase storage.](./FIREBASE.md)
+Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
 
 ```
 docker-compose -f docker-compose.yml up       
