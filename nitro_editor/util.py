@@ -113,6 +113,12 @@ class FireBaseConnector:
 
     def upload(self, file_path: str):
         file_name = os.path.basename(file_path)
+
+        # img_url = self.__storage.child(file_name).put(file_path)
+        # print(img_url)
+        # url = self.__storage.child(file_name).get_url(img_url['downloadTokens'])
+        # print(url)
+
         self.__storage.child(file_name).put(file_path)
         url = self.__storage.child(file_name).get_url(token=None)
         return url
