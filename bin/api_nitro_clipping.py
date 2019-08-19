@@ -271,9 +271,13 @@ def main():
 
         file_name = request.args.get("file_name")
         try:
-            if file_name == '':
+            if file_name == 'all':
+                logger.info('remove all files on firebase')
                 removed = firebase.remove(None)
+            elif file_name == '':
+                return BadRequest('`job_id` is required.')
             else:
+                logger.info('remove %s files on firebase' % str(file_name))
                 removed = firebase.remove(file_name)
             return jsonify(removed_files=removed)
         except Exception:

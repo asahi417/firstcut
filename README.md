@@ -21,6 +21,7 @@ docker-compose -f docker-compose.yml up
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
+- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_wav_0.wav"}' http://0.0.0.0:8008/audio_clip`
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
@@ -37,6 +38,7 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `job_status`
 - Description: GET API for job status
+- Sample" `curl http://0.0.0.0:8008/job_status\?job_id\=zqtlnxepvd | jq`
 - Parameters:
 
 | Parameter name                  | Default | Description                                                                         |
@@ -55,7 +57,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `job_ids`
 - Description: GET API to get list of job id
-
 - Return:
 
 | return name         | Description     |
@@ -79,7 +80,7 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 | Parameter name   | Default | Description                                                                         |
 | ---------------- | ------- | ----------------------------------------------------------------------------------- |
-| **file_name**    |         | file name to remove, if not provided, remove all the files |
+| **file_name**    |         | file name to remove, if not provided, remove all the files (`all` to remove all files) |
 
 
 - Return:
