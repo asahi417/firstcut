@@ -29,7 +29,8 @@ setup(
         'urllib3',
         'moviepy',
         'pyrebase',
-        'flask_cors'
+        'flask_cors',
+        'pydub'
     ]
 )
 
