@@ -12,6 +12,5 @@ dist
 Voice
 sample_files/*_edit.wav
 sample_files/*_edit.mp4
-random
 docker-compose.dev.yml
 config.sh
