@@ -53,33 +53,31 @@ def main():
                 min_interval_sec,
                 min_amplitude):
         try:
+            logger.info('   - validate file_name')
+            basename = os.path.basename(file_name)
+            name, identifier = basename.split('.')
+            path_file = os.path.join(tmp_storage_audio, '%s_raw.%s' % (job_id, identifier))
+            path_save = os.path.join(tmp_storage_audio, '%s_processed.%s' % (job_id, identifier))
 
-            # download file from firebase
-            job_status_instance.update(job_id=job_id, status=' - downloading data from firebase')
-            if file_name.endswith('.wav'):
-                path_file = os.path.join(tmp_storage_audio, job_id + '_raw.wav')
-                path_save = os.path.join(tmp_storage_audio, job_id + '_processed.wav')
-            elif file_name.endswith('.mp4'):
-                path_file = os.path.join(tmp_storage_video, job_id + '_raw.mp4')
-                path_save = os.path.join(tmp_storage_video, job_id + '_processed.mp4')
-            else:
-                raise ValueError('unknown file format: %s' % file_name)
+            logger.info('   - download file from firebase to %s' % path_file)
+            # download from firebase
+            job_status_instance.update(job_id=job_id, status=' - downloading data from firebase (to %s)' % path_file)
             firebase.download(file_name=file_name, path=path_file)
 
-            # edit
+            logger.info('   - start processing')
             job_status_instance.update(job_id=job_id, status=' - start processing')
             editor = nitro_editor.audio.Editor(path_file)
-            editor.amplitude_clipping(min_amplitude=min_amplitude, min_interval_sec=min_interval_sec)
+            editor.amplitude_clipping(min_amplitude=min_amplitude, min_interval_sec=min_interval_sec, logger=logger)
+            logger.info('   - saving to %s' % path_save)
             editor.write(path_save)
 
-            # upload
+            logger.info('   - upload')
             job_status_instance.update(job_id=job_id, status=' - uploading processed data')
             url = firebase.upload(file_path=path_save)
 
-            # clean local storage
+            logger.info('   - clean local storage')
             os.system('rm -rf %s' % path_file)
-            os.system('rm -rf %s' % path_save)
-
+            # os.system('rm -rf %s' % path_save)
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
 
@@ -124,8 +122,8 @@ def main():
         file_name = post_body.get('file_name', '')
         if file_name == "":
             return BadRequest("Parameter `file_name` is required.")
-        elif not file_name.endswith('wav'):
-            return BadRequest("Parameter `file_name` should be `wav`: %s" % file_name)
+        elif not len(os.path.basename(file_name).split('.')) > 1:
+            return BadRequest('file dose not have any identifiers: %s' % file_name)
         logger.info(' * parameter `file_path`: %s' % file_name)
 
         min_interval_sec = post_body.get('min_interval_sec', '')

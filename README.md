@@ -3,7 +3,7 @@ Audio/video clipping service by detecting silent interval automatically and elim
 the original file (eg, [raw sound](./sample_files/sample_0.wav) -> [processed sound](./sample_files/sample_0_edit.wav)).
 Firebase storage is used as backend data I/O.  
 
-## Get started
+## Get started with Docker
 Clone the repo
 
 ```
@@ -38,7 +38,7 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `job_status`
 - Description: GET API for job status
-- Sample" `curl http://0.0.0.0:8008/job_status\?job_id\=zqtlnxepvd | jq`
+- Sample" `curl http://0.0.0.0:8008/job_status\?job_id\=zqtlnxepvd`
 - Parameters:
 
 | Parameter name                  | Default | Description                                                                         |
@@ -111,7 +111,17 @@ Environment variables:
 | **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
 | **FIREBASE_PASSWORD**      |         | password for the Gmail account |
 
-2. ***install & run API server***    
+2. ***install ffmpeg***  
+On Mac
+```
+brew install ffmpeg 
+```
+On ubuntu 
+```
+sudo apt install ffmpeg
+```
+
+3. ***install & run API server***    
 ```
 pip install -e .
 python ./bin/api_nitro_clipping.py

@@ -1,11 +1,11 @@
 import numpy as np
 from pydub import AudioSegment
 
-PATH = './sample_files/sample_3.mp3'
-OUT_PATH = './sample_files/sample_3_io.mp3'
+# PATH = './sample_files/sample_3.mp3'
+# OUT_PATH = './sample_files/sample_3_io.mp3'
 
-# PATH = './sample_files/sample_1.wav'
-# OUT_PATH = './sample_files/sample_1_io.wav'
+PATH = './sample_files/sample_1.wav'
+OUT_PATH = './sample_files/sample_1_io.wav'
 
 
 if PATH.endswith('.mp3'):
