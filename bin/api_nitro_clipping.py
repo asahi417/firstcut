@@ -15,7 +15,8 @@ ROOT_DIR = os.path.expanduser("~")
 
 PORT = int(os.getenv("PORT", "8008"))
 MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.2"))
-MIN_AMPLITUDE = float(os.getenv("MIN_AMPLITUDE", "0.1"))
+CUTOFF_PERCENT = float(os.getenv("CUTOFF_PERCENT", "0.7"))
+CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
 
 FIREBASE_SERVICE_ACOUNT = os.getenv('FIREBASE_SERVICE_ACOUNT', None)
@@ -27,10 +28,13 @@ FIREBASE_STORAGEBUCKET = os.getenv('FIREBASE_STORAGEBUCKET', None)
 FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
 FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
 
+LOG = nitro_editor.util.create_log()
+LOCAL_TEST = bool(int(os.getenv('LOCAL_TEST', 0)))
+
 
 def main():
     job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
-    logger = nitro_editor.util.create_log()
+
     firebase = nitro_editor.util.FireBaseConnector(
         apiKey=FIREBASE_APIKEY,
         authDomain=FIREBASE_AUTHDOMAIN,
@@ -51,39 +55,40 @@ def main():
     def process(job_id,
                 file_name,
                 min_interval_sec,
-                min_amplitude):
+                percent):
         try:
-            logger.info('   - validate file_name')
+            LOG.debug('validate file_name')
             basename = os.path.basename(file_name)
             name, identifier = basename.split('.')
             path_file = os.path.join(tmp_storage_audio, '%s_raw.%s' % (job_id, identifier))
             path_save = os.path.join(tmp_storage_audio, '%s_processed.%s' % (job_id, identifier))
 
-            logger.info('   - download file from firebase to %s' % path_file)
+            LOG.debug('download file from firebase to %s' % path_file)
             # download from firebase
             job_status_instance.update(job_id=job_id, status=' - downloading data from firebase (to %s)' % path_file)
             firebase.download(file_name=file_name, path=path_file)
 
-            logger.info('   - start processing')
+            LOG.debug('start processing')
             job_status_instance.update(job_id=job_id, status=' - start processing')
-            editor = nitro_editor.audio.Editor(path_file)
-            editor.amplitude_clipping(min_amplitude=min_amplitude, min_interval_sec=min_interval_sec, logger=logger)
-            logger.info('   - saving to %s' % path_save)
+            editor = nitro_editor.audio.Editor(path_file, cutoff_method=CUTOFF_METHOD)
+            editor.amplitude_clipping(min_interval_sec=min_interval_sec, percent=percent)
+            LOG.debug('saving to %s' % path_save)
             editor.write(path_save)
 
-            logger.info('   - upload')
+            LOG.info('upload')
             job_status_instance.update(job_id=job_id, status=' - uploading processed data')
             url = firebase.upload(file_path=path_save)
 
-            logger.info('   - clean local storage')
+            LOG.info('clean local storage')
             os.system('rm -rf %s' % path_file)
-            # os.system('rm -rf %s' % path_save)
+            if not LOCAL_TEST:
+                os.system('rm -rf %s' % path_save)
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
 
         except Exception:
             msg = traceback.format_exc()
-            logger.error('job_id `%s` raises InternalServerError\n %s' % (job_id, msg))
+            LOG.error('job_id `%s` raises InternalServerError\n %s' % (job_id, msg))
             job_status_instance.error(job_id=job_id, error_message=msg)
 
     @app.route("/audio_clip", methods=["POST"])
@@ -98,7 +103,6 @@ def main():
         | ----------------------------------------- | -------------------- | -------------------------------
         | **file_name**<br />_(\* required)_        |  -                   | file name in firebase project
         | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec)
-        | **min_amplitude**                         | **MIN_AMPLITUDE**    | minimum amplitude
 
         - Return:
         | Name       | Description
@@ -107,7 +111,7 @@ def main():
 
         """
 
-        logger.info('audio_clip: new request')
+        LOG.info('audio_clip: new request')
 
         # check request form
         if request.method != "POST":
@@ -124,7 +128,7 @@ def main():
             return BadRequest("Parameter `file_name` is required.")
         elif not len(os.path.basename(file_name).split('.')) > 1:
             return BadRequest('file dose not have any identifiers: %s' % file_name)
-        logger.info(' * parameter `file_path`: %s' % file_name)
+        LOG.info(' * parameter `file_path`: %s' % file_name)
 
         min_interval_sec = post_body.get('min_interval_sec', '')
         valid_flg, value_or_msg = nitro_editor.util.validate_numeric(min_interval_sec, MIN_INTERVAL_SEC, 0.0, 10000, is_float=True)
@@ -132,22 +136,22 @@ def main():
             return BadRequest(value_or_msg)
         min_interval_sec = value_or_msg
 
-        min_amplitude = post_body.get('min_amplitude', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(min_amplitude, MIN_AMPLITUDE, 0.0, 100, is_float=True)
+        cutoff_percent = post_body.get('cutoff_percent', '')
+        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(cutoff_percent, CUTOFF_PERCENT, 0.0, 1.0, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
-        min_amplitude = value_or_msg
+        cutoff_percent = value_or_msg
 
         # run process
         job_id = job_status_instance.register_job()
-        logger.info(' - job_id: %s' % job_id)
-        thread = Thread(target=process, args=[job_id, file_name, min_interval_sec, min_amplitude])
+        LOG.info(' - job_id: %s' % job_id)
+        thread = Thread(target=process, args=[job_id, file_name, min_interval_sec, cutoff_percent])
         thread.start()
         return jsonify(job_id=job_id)
 
     # @app.route("/video_clipping", methods=["POST"])
     # def video_clipping_endpoint():
-    #     logger.info('video clipping: new request')
+    #     LOG.info('video clipping: new request')
     #
     #     if request.method != "POST":
     #         return jsonify(status="ERROR: Bad Method `%s`. Only POST method is allowed." % request.method)
@@ -167,7 +171,7 @@ def main():
     #             msg = "Error: Parameter `%s` is required." % name
     #             return msg, is_error
     #         if tmp.startswith('http'):
-    #             logger.info('download file from %s' % tmp)
+    #             LOG.info('download file from %s' % tmp)
     #             urllib.request.urlretrieve(tmp, tmp_download_file)
     #
     #             start = time()
@@ -180,7 +184,7 @@ def main():
     #                     return msg, is_error
     #             tmp = tmp_download_file
     #             return tmp, is_error
-    #         logger.info(' - %s: %s' % (name, str(tmp)))
+    #         LOG.info(' - %s: %s' % (name, str(tmp)))
     #         return tmp, is_error
     #
     #     def param_validate(name, default, min_val, max_val, data_type=float):
@@ -201,10 +205,10 @@ def main():
     #             is_error = True
     #             return msg, is_error
     #
-    #         logger.info(' - %s: %s' % (name, str(numeric_val)))
+    #         LOG.info(' - %s: %s' % (name, str(numeric_val)))
     #         return numeric_val, is_error
     #
-    #     logger.info('parameters')
+    #     LOG.info('parameters')
     #
     #     output, _is_error = required_param_validate('file_path')
     #     if _is_error:
@@ -230,7 +234,7 @@ def main():
     #     else:
     #         min_amplitude = output
     #
-    #     logger.info('start process')
+    #     LOG.info('start process')
     #     thread = Thread(target=process,
     #                     args=[file_path, output_path, min_interval_sec, min_amplitude, tmp_download_file])
     #     thread.start()
@@ -270,12 +274,12 @@ def main():
         file_name = request.args.get("file_name")
         try:
             if file_name == 'all':
-                logger.info('remove all files on firebase')
+                LOG.info('remove all files on firebase')
                 removed = firebase.remove(None)
             elif file_name == '':
                 return BadRequest('`job_id` is required.')
             else:
-                logger.info('remove %s files on firebase' % str(file_name))
+                LOG.info('remove %s files on firebase' % str(file_name))
                 removed = firebase.remove(file_name)
             return jsonify(removed_files=removed)
         except Exception:

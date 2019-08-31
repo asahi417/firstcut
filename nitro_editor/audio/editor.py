@@ -1,18 +1,23 @@
 import numpy as np
 from pydub import AudioSegment
 import os
+from .cutoff_methods import CutoffMethods
+from ..util import create_log
 
 VALID_FORMAT = ['mp3', 'wav']
+LOG = create_log()
 
 
 class Editor:
 
-    def __init__(self, file_path):
+    def __init__(self,
+                 file_path,
+                 cutoff_method:str='percentile'):
 
         # load audio data
         self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels = \
             self.__load_audio(file_path)
-
+        self.__cutoff_instance = CutoffMethods(cutoff_method)
         self.__signal_mask = None
         self.__keep_part_sec = None
 
@@ -71,9 +76,8 @@ class Editor:
 
 
     def amplitude_clipping(self,
-                           min_amplitude: float,
                            min_interval_sec: float,
-                           logger=None):
+                           percent: float=1.0):
         """ Amplitude-based truncation. In given audio signal, where every sampling point has amplitude
         less than `min_amplitude` and the length is greater than `min_interval`, will be removed. Note that
         even if the audio has multi-channel, first channel will be processed.
@@ -81,34 +85,28 @@ class Editor:
 
          Parameter
         ---------------
-        min_amplitude: float
-            minimum amplitude to cutoff
         min_interval_sec: int
             minimum interval of cutoff (sec)
         """
-
-        def __log(msg):
-            if logger is not None:
-                logger.info(msg)
-
-        assert min_amplitude > 0
         assert min_interval_sec > 0
-        __log('start amplitude clipping')
+        LOG.debug('start amplitude clipping')
+        LOG.debug(' * min_interval_sec: %0.2f' % min_interval_sec)
+        LOG.debug(' * percent: %0.2f' % percent)
 
         # pick up mono wave
-        wave = np.abs(self.__wave_array_np_list[0])
+        wave = self.__wave_array_np_list[0]
+        LOG.debug('audio info')
+        LOG.debug(' * sample size     : %i' % len(wave))
+        LOG.debug(' * sample sec      : %0.3f' % self.length_sec)
+        LOG.debug(' * channel         : %i' % self.channels)
+        LOG.debug(' * frame rate      : %i' % self.frame_rate)
+        LOG.debug(' * sample width    : %i' % self.sample_width)
+        LOG.debug(' * audio_amplitude : %i (max), %i (min)' % (np.max(wave), np.min(wave)))
+
+        min_amplitude = self.__cutoff_instance.get_cutoff_amp(wave, percent=percent)
         min_interval = int(min_interval_sec * self.__frame_rate)
-        audio_signal_mask = (wave > min_amplitude)
-        __log(' * audio info')
-        __log('     - sample size     : %i' % len(wave))
-        __log('     - sample sec      : %0.3f' % self.length_sec)
-        __log('     - channel         : %i' % self.channels)
-        __log('     - frame rate      : %i' % self.frame_rate)
-        __log('     - sample width    : %i' % self.sample_width)
-        __log('     - audio_amplitude : %i (max), %i (min)' % (np.max(wave), np.min(wave)))
-        __log(' * min_amplitude       : %0.3f' % min_amplitude)
-        __log(' * masked sample       : %i' % (wave.shape[0] - np.sum(audio_signal_mask)))
-        __log(' * min_interval_sec    : %0.3f' % min_interval_sec)
+        audio_signal_mask = np.array(np.abs(wave) > min_amplitude)
+        LOG.debug('masked sample       : %i' % (wave.shape[0] - np.sum(audio_signal_mask)))
 
         flg = False
         count = 0
@@ -147,7 +145,7 @@ class Editor:
             audio_signal_masked = wave[audio_signal_mask]
             __wave_array_np_list.append(audio_signal_masked)
 
-        __log(' * processed: %i -> %i' % (len(self.__wave_array_np_list[0]), np.sum(audio_signal_mask)))
+        LOG.debug('processed: %i -> %i' % (len(self.__wave_array_np_list[0]), np.sum(audio_signal_mask)))
         assert len(__wave_array_np_list) == len(self.__wave_array_np_list)
         self.__wave_array_np_list = __wave_array_np_list
         self.__signal_mask = audio_signal_mask
