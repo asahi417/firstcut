@@ -12,7 +12,7 @@ class Editor:
 
     def __init__(self,
                  file_path,
-                 cutoff_method:str='percentile'):
+                 cutoff_method: str='percentile'):
 
         # load audio data
         self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels = \
@@ -72,8 +72,6 @@ class Editor:
         channels = song.channels
 
         return wave_array_np_list, audio_format, frame_rate, sample_width, channels
-
-
 
     def amplitude_clipping(self,
                            min_interval_sec: float,
