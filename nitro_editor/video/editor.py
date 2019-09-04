@@ -1,15 +1,51 @@
 from moviepy import editor
 import os
 import subprocess
-from ..audio import Editor as AudioEditor
+from .. import audio
+from ..util import create_log
+
+VALID_FORMAT = ['mp4']
+LOG = create_log()
 
 
-def clean_file(_file):
-    if os.path.exists(_file):
-        os.remove(_file)
+# def clean_file(_file):
+#     if os.path.exists(_file):
+#         os.remove(_file)
 
 
-def extract_audio_from_video(video_file, audio_file):
+# def extract_audio_from_video(video_file, audio_file):
+#     """ Extract audio data from video
+#
+#      Parameter
+#     --------------------
+#     video_file: str
+#         path to target video
+#     audio_file: str
+#         path to save audio wav file. shoud be end with ~.wav
+#
+#      Return
+#     --------------------
+#     str output message from ffmpeg
+#     """
+#
+#     assert video_file.endswith('.mp4')
+#     assert audio_file.endswith('.wav')
+#
+#     if not os.path.exists(video_file):
+#         raise ValueError('No video file at: %s' % video_file)
+#     command = "ffmpeg -i %s -ab 160k -ac 2 -ar 44100 -vn %s" % (video_file, audio_file)
+#
+#     try:
+#         output = subprocess.check_output(
+#             command, stderr=subprocess.STDOUT, shell=True, timeout=3,
+#             universal_newlines=True)
+#     except subprocess.CalledProcessError as exc:
+#         raise ValueError("Status : FAIL", exc.returncode, exc.output)
+#
+#     return "Output: \n{}\n".format(output)
+
+
+def combine_audio_video(video_file, audio_file, output_file):
     """ Extract audio data from video
 
      Parameter
@@ -24,13 +60,15 @@ def extract_audio_from_video(video_file, audio_file):
     str output message from ffmpeg
     """
 
-    assert video_file.endswith('.mp4')
-    assert audio_file.endswith('.wav')
+    if not (video_file.endswith('.mp4')):
+        raise ValueError('unknown video format: %s' % video_file)
+    if not (audio_file.endswith('.wav') or audio_file.endswith('.mp3')):
+        raise ValueError('unknown audio format: %s' % audio_file)
 
     if not os.path.exists(video_file):
         raise ValueError('No video file at: %s' % video_file)
-    command = "ffmpeg -i %s -ab 160k -ac 2 -ar 44100 -vn %s" % (video_file, audio_file)
 
+    command = "ffmpeg -i %s -i %s -vcodec copy %s" % (video_file, audio_file, output_file)
     try:
         output = subprocess.check_output(
             command, stderr=subprocess.STDOUT, shell=True, timeout=3,
@@ -38,26 +76,9 @@ def extract_audio_from_video(video_file, audio_file):
     except subprocess.CalledProcessError as exc:
         raise ValueError("Status : FAIL", exc.returncode, exc.output)
 
-    return "Output: \n{}\n".format(output)
+    LOG.debug("Output: \n{}\n".format(output))
 
-
-def combine_wav_mp4(mp4_file, wav_file, output_file):
-    assert mp4_file.endswith('mp4')
-    assert wav_file.endswith('wav')
-    assert output_file.endswith('mp4')
-    command = "ffmpeg -i %s -i %s -vcodec copy %s" % (mp4_file, wav_file, output_file)
-
-    try:
-        output = subprocess.check_output(
-            command, stderr=subprocess.STDOUT, shell=True, timeout=3,
-            universal_newlines=True)
-    except subprocess.CalledProcessError as exc:
-        raise ValueError("Status : FAIL", exc.returncode, exc.output)
-
-    return "Output: \n{}\n".format(output)
-
-
-class Editor:
+class VideoEditor:
 
     @property
     def video(self):

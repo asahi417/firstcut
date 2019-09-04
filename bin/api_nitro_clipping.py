@@ -70,7 +70,7 @@ def main():
 
             LOG.debug('start processing')
             job_status_instance.update(job_id=job_id, status=' - start processing')
-            editor = nitro_editor.audio.Editor(path_file, cutoff_method=CUTOFF_METHOD)
+            editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
             editor.amplitude_clipping(min_interval_sec=min_interval_sec, percent=percent)
             LOG.debug('saving to %s' % path_save)
             editor.write(path_save)

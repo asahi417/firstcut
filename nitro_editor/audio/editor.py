@@ -1,22 +1,22 @@
+import os
 import numpy as np
 from pydub import AudioSegment
-import os
+from moviepy import editor
 from .cutoff_methods import CutoffMethods
-from ..util import create_log
+from ..util import create_log, combine_audio_video
 
-VALID_FORMAT = ['mp3', 'wav']
+VALID_FORMAT = ['mp3', 'wav', 'mp4']
 LOG = create_log()
 
 
-class Editor:
+class AudioEditor:
 
     def __init__(self,
                  file_path,
                  cutoff_method: str='percentile'):
 
         # load audio data
-        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels = \
-            self.__load_audio(file_path)
+        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels, self.__video, self.__video_format = self.__load_audio(file_path)
         self.__cutoff_instance = CutoffMethods(cutoff_method)
         self.__signal_mask = None
         self.__keep_part_sec = None
@@ -43,12 +43,19 @@ class Editor:
             raise ValueError('No file: %s' % file_path)
 
         # validate sound file (load as AudioSegment object
+        video = None
+        video_format = None
         if file_path.endswith('.wav'):
             audio_format = 'wav'
             song = AudioSegment.from_wav(file_path)
         elif file_path.endswith('.mp3'):
             audio_format = 'mp3'
             song = AudioSegment.from_mp3(file_path)
+        elif file_path.endswith('.mp4'):
+            audio_format = 'mp3'
+            video_format = 'mp4'
+            song = AudioSegment.from_file(file_path)
+            video = editor.VideoFileClip(file_path)
         else:
             raise ValueError('unknown format %s (valid format: %s)'% (file_path, VALID_FORMAT))
 
@@ -71,7 +78,7 @@ class Editor:
         sample_width = song.sample_width
         channels = song.channels
 
-        return wave_array_np_list, audio_format, frame_rate, sample_width, channels
+        return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format
 
     def amplitude_clipping(self,
                            min_interval_sec: float,
@@ -169,6 +176,8 @@ class Editor:
         elif not os.path.exists(os.path.dirname(_file)):
                 os.makedirs(os.path.dirname(_file), exist_ok=True)
         audio_segment.export(_file, format=self.__audio_format)
+
+        if self.__video_format is not None
 
     @property
     def length_sec(self):
