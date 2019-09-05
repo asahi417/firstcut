@@ -4,6 +4,7 @@ import nitro_editor
 from threading import Thread
 import traceback
 import os
+import argparse
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError
@@ -15,7 +16,7 @@ ROOT_DIR = os.path.expanduser("~")
 
 PORT = int(os.getenv("PORT", "8008"))
 MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.2"))
-CUTOFF_PERCENT = float(os.getenv("CUTOFF_PERCENT", "0.7"))
+CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.7"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
 
@@ -29,11 +30,21 @@ FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
 FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
 
 LOG = nitro_editor.util.create_log()
-LOCAL_TEST = bool(int(os.getenv('LOCAL_TEST', 0)))
 
 
-def main():
+def main(debug: bool=False):
     job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
+
+    def logging(_msg, _job_id, debug: bool = False, error: bool = False):
+        if error:
+            job_status_instance.error(job_id=_job_id, error_message=_msg)
+            LOG.error('job_id `%s` raises InternalServerError\n %s' % (_job_id, _msg))
+        else:
+            job_status_instance.update(job_id=_job_id, status=' - uploading processed data')
+            if debug:
+                LOG.debug(_msg)
+            else:
+                LOG.info(_msg)
 
     firebase = nitro_editor.util.FireBaseConnector(
         apiKey=FIREBASE_APIKEY,
@@ -45,51 +56,45 @@ def main():
         password=FIREBASE_PASSWORD
     )
     # directory where audio/video files are temporarily stored
-    tmp_storage_audio = os.path.join(ROOT_DIR, 'nitro_editor_data', 'tmp_audio')
-    if not os.path.exists(tmp_storage_audio):
-        os.makedirs(tmp_storage_audio, exist_ok=True)
-    tmp_storage_video = os.path.join(ROOT_DIR, 'nitro_editor_data', 'tmp_video')
-    if not os.path.exists(tmp_storage_video):
-        os.makedirs(tmp_storage_video, exist_ok=True)
+    tmp_storage = os.path.join(ROOT_DIR, 'nitro_editor_data', 'tmp_files')
+    if not os.path.exists(tmp_storage):
+        os.makedirs(tmp_storage, exist_ok=True)
 
     def process(job_id,
                 file_name,
                 min_interval_sec,
-                percent):
+                ratio):
         try:
-            LOG.debug('validate file_name')
+            logging('validate file_name', job_id, debug=True)
             basename = os.path.basename(file_name)
             name, identifier = basename.split('.')
-            path_file = os.path.join(tmp_storage_audio, '%s_raw.%s' % (job_id, identifier))
-            path_save = os.path.join(tmp_storage_audio, '%s_processed.%s' % (job_id, identifier))
+            path_file = os.path.join(tmp_storage, '%s_%s_raw.%s' % (name, job_id, identifier))
+            path_save = os.path.join(tmp_storage, '%s_%s_processed.%s' % (name, job_id, identifier))
 
-            LOG.debug('download file from firebase to %s' % path_file)
-            # download from firebase
-            job_status_instance.update(job_id=job_id, status=' - downloading data from firebase (to %s)' % path_file)
-            firebase.download(file_name=file_name, path=path_file)
+            if not os.path.exists(path_file):
+                logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
+                firebase.download(file_name=file_name, path=path_file)
 
-            LOG.debug('start processing')
-            job_status_instance.update(job_id=job_id, status=' - start processing')
+            logging('start processing', job_id, debug=True)
             editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
-            editor.amplitude_clipping(min_interval_sec=min_interval_sec, percent=percent)
-            LOG.debug('saving to %s' % path_save)
+            editor.amplitude_clipping(min_interval_sec=min_interval_sec, ratio=ratio)
+
+            logging('save tmp folder: %s' % tmp_storage, job_id, debug=True)
             editor.write(path_save)
 
-            LOG.info('upload')
-            job_status_instance.update(job_id=job_id, status=' - uploading processed data')
+            logging('upload to firebase', job_id, debug=True)
             url = firebase.upload(file_path=path_save)
 
-            LOG.info('clean local storage')
-            os.system('rm -rf %s' % path_file)
-            if not LOCAL_TEST:
-                os.system('rm -rf %s' % path_save)
+            if not debug:
+                to_clean = os.path.join(tmp_storage, '%s_%s_*' % (name, job_id))
+                logging('clean local storage: %s' % to_clean, job_id, debug=True)
+                os.system('rm -rf %s' % to_clean)
+
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
 
         except Exception:
-            msg = traceback.format_exc()
-            LOG.error('job_id `%s` raises InternalServerError\n %s' % (job_id, msg))
-            job_status_instance.error(job_id=job_id, error_message=msg)
+            logging(traceback.format_exc(), job_id, error=True)
 
     @app.route("/audio_clip", methods=["POST"])
     def audio_clip():
@@ -103,6 +108,7 @@ def main():
         | ----------------------------------------- | -------------------- | -------------------------------
         | **file_name**<br />_(\* required)_        |  -                   | file name in firebase project
         | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec)
+        | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1
 
         - Return:
         | Name       | Description
@@ -136,109 +142,18 @@ def main():
             return BadRequest(value_or_msg)
         min_interval_sec = value_or_msg
 
-        cutoff_percent = post_body.get('cutoff_percent', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(cutoff_percent, CUTOFF_PERCENT, 0.0, 1.0, is_float=True)
+        cutoff_ratio = post_body.get('cutoff_ratio', '')
+        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(cutoff_ratio, CUTOFF_RATIO, 0.0, 1.0, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
-        cutoff_percent = value_or_msg
+        cutoff_ratio = value_or_msg
 
         # run process
         job_id = job_status_instance.register_job()
         LOG.info(' - job_id: %s' % job_id)
-        thread = Thread(target=process, args=[job_id, file_name, min_interval_sec, cutoff_percent])
+        thread = Thread(target=process, args=[job_id, file_name, min_interval_sec, cutoff_ratio])
         thread.start()
         return jsonify(job_id=job_id)
-
-    # @app.route("/video_clipping", methods=["POST"])
-    # def video_clipping_endpoint():
-    #     LOG.info('video clipping: new request')
-    #
-    #     if request.method != "POST":
-    #         return jsonify(status="ERROR: Bad Method `%s`. Only POST method is allowed." % request.method)
-    #
-    #     if request.headers.get("Content-Type") != 'application/json':
-    #         return jsonify(status="ERROR: Bad Content-Type `%s`. Only application/json Content-Type is allowed."
-    #                               % request.headers)
-    #
-    #     post_body = request.get_json()
-    #     tmp_download_file = TMP_DOWNLOAD_FILE + '.mp4'
-    #
-    #     def required_param_validate(name):
-    #         tmp = post_body.get(name, "")
-    #         is_error = False
-    #         if tmp == "":
-    #             is_error = True
-    #             msg = "Error: Parameter `%s` is required." % name
-    #             return msg, is_error
-    #         if tmp.startswith('http'):
-    #             LOG.info('download file from %s' % tmp)
-    #             urllib.request.urlretrieve(tmp, tmp_download_file)
-    #
-    #             start = time()
-    #             while True:
-    #                 if os.path.exists(tmp_download_file):
-    #                     break
-    #                 if time() - start > 30:
-    #                     is_error = True
-    #                     msg = 'ERROR: Runtime error, can not download file: %s ' % tmp_download_file
-    #                     return msg, is_error
-    #             tmp = tmp_download_file
-    #             return tmp, is_error
-    #         LOG.info(' - %s: %s' % (name, str(tmp)))
-    #         return tmp, is_error
-    #
-    #     def param_validate(name, default, min_val, max_val, data_type=float):
-    #         param_value = post_body.get(name, default)
-    #         is_error = False
-    #         if param_value is None:
-    #             return param_value
-    #
-    #         try:
-    #             numeric_val = data_type(param_value)
-    #         except ValueError:
-    #             msg = f'Param "{name}" must be a numeric value between "{min_val}" and "{max_val}"'
-    #             is_error = True
-    #             return msg, is_error
-    #
-    #         if numeric_val > max_val or numeric_val < min_val:
-    #             msg = f'Param "{name}" must be between {min_val} and {max_val}'
-    #             is_error = True
-    #             return msg, is_error
-    #
-    #         LOG.info(' - %s: %s' % (name, str(numeric_val)))
-    #         return numeric_val, is_error
-    #
-    #     LOG.info('parameters')
-    #
-    #     output, _is_error = required_param_validate('file_path')
-    #     if _is_error:
-    #         return jsonify(status='ERROR: %s' % output)
-    #     else:
-    #         file_path = output
-    #
-    #     output, _is_error = required_param_validate('output_path')
-    #     if _is_error:
-    #         return jsonify(status='ERROR: %s' % output)
-    #     else:
-    #         output_path = output
-    #
-    #     output, _is_error = param_validate('min_interval_sec', MIN_INTERVAL_SEC, 0.0, 10000, float)
-    #     if _is_error:
-    #         return jsonify(status='ERROR: %s' % output)
-    #     else:
-    #         min_interval_sec = output
-    #
-    #     output, _is_error = param_validate('min_amplitude', MIN_AMPLITUDE, 0.0, 100, float)
-    #     if _is_error:
-    #         return jsonify(status='ERROR: %s' % output)
-    #     else:
-    #         min_amplitude = output
-    #
-    #     LOG.info('start process')
-    #     thread = Thread(target=process,
-    #                     args=[file_path, output_path, min_interval_sec, min_amplitude, tmp_download_file])
-    #     thread.start()
-    #     return jsonify(status='process started')
 
     @app.route("/job_status", methods=["GET"])
     def job_status():
@@ -287,6 +202,11 @@ def main():
 
     app.run(host="0.0.0.0", port=PORT, debug=False)
 
+def get_options():
+    parser = argparse.ArgumentParser(description='clipping API', formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--debug', help='debug mode', action='store_true')
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    main()
+    args = get_options()
+    main(args.debug)
