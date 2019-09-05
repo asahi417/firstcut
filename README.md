@@ -27,6 +27,9 @@ docker-compose -f docker-compose.yml up
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
 | **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
+| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
+| **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
+
 
 - Return:
 
