@@ -21,15 +21,17 @@ docker-compose -f docker-compose.yml up
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_wav_0.wav"}' http://0.0.0.0:8008/audio_clip`
+- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav"}' http://0.0.0.0:8008/audio_clip`
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
 | **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
+| **file_path**<br />_(\* required)_        |  -                   | absolute file path to local file |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
 
+Either **file_name**<br /> or **file_path**<br /> is required. 
 
 - Return:
 
