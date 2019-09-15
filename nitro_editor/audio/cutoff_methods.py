@@ -14,11 +14,11 @@ class CutoffMethods:
             raise ValueError('unknown `method_type`: %s not in %s' % (method_type, VALID_METHOD_TYPES))
         self.__method_type = method_type
 
-    def get_cutoff_amp(self, wave_data, percent: float=None):
+    def get_cutoff_amp(self, wave_data, ratio: float=None):
         if self.__method_type in ['percentile']:
-            if percent is None:
-                raise ValueError('`percentile` requires `percent` parameter')
-            return self.__percentile(wave_data, percent)
+            if ratio is None:
+                raise ValueError('`percentile` requires `ratio` parameter')
+            return self.__percentile(wave_data, ratio)
 
     @staticmethod
     def __percentile(data, p):
