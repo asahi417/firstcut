@@ -1,7 +1,10 @@
 import os
-import logging
 import pyrebase
 import subprocess
+import logging
+# import traceback
+from logging.config import dictConfig
+
 
 def combine_audio_video(video_file, audio_file, output_file):
     """ Extract audio data from video
@@ -70,56 +73,31 @@ def validate_numeric(value: str, default, min_val, max_val, is_float=False):
     return True, value
 
 
-def create_log(out_file_path=None):
-    """ Logging
-        If `out_file_path` is None, only show in terminal
-        or else save log file in `out_file_path`
-
+def create_log():
+    """ Logger
     Usage
     -------------------
     logger.info(message)
     logger.error(error)
     """
-
-    # handler to record log to a log file
-    if out_file_path is not None:
-        if os.path.exists(out_file_path):
-            os.remove(out_file_path)
-        logger = logging.getLogger(out_file_path)
-
-        if len(logger.handlers) > 1:  # if there are already handler, return it
-            return logger
-        else:
-            logger.setLevel(logging.DEBUG)
-            formatter = logging.Formatter("H1, %(asctime)s %(levelname)8s %(message)s")
-
-            handler = logging.FileHandler(out_file_path)
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-
-            logger_stream = logging.getLogger()
-            # check if some stream handlers are already
-            if len(logger_stream.handlers) > 0:
-                return logger
-            else:
-                handler = logging.StreamHandler()
-                handler.setFormatter(formatter)
-                logger.addHandler(handler)
-
-                return logger
-    else:
-        # handler to output
-        handler = logging.StreamHandler()
-        logger = logging.getLogger()
-
-        if len(logger.handlers) > 0:  # if there are already handler, return it
-            return logger
-        else:  # in case of no, make new output handler
-            logger.setLevel(logging.DEBUG)
-            formatter = logging.Formatter("H1, %(asctime)s %(levelname)8s %(message)s")
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-            return logger
+    logging_config = dict(
+        version=1,
+        formatters={
+            'f': {'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'}
+        },
+        handlers={
+            'h': {'class': 'logging.StreamHandler',
+                  'formatter': 'f',
+                  'level': logging.DEBUG}
+        },
+        root={
+            'handlers': ['h'],
+            'level': logging.DEBUG,
+        },
+    )
+    dictConfig(logging_config)
+    logger = logging.getLogger()
+    return logger
 
 
 class FireBaseConnector:
@@ -132,26 +110,23 @@ class FireBaseConnector:
                  gmail,
                  password,
                  serviceAccount):
-        # initialize
-        self.__firebase = pyrebase.initialize_app(dict(
-            apiKey=apiKey,
-            authDomain=authDomain,
-            databaseURL=databaseURL,
-            storageBucket=storageBucket,
-            serviceAccount=serviceAccount
-        ))
-        # authentication
+        self.__firebase = pyrebase.initialize_app(
+            dict(apiKey=apiKey,
+                 authDomain=authDomain,
+                 databaseURL=databaseURL,
+                 storageBucket=storageBucket,
+                 serviceAccount=serviceAccount)
+        )
         auth = self.__firebase.auth()
         auth.sign_in_with_email_and_password(gmail, password)
         self.__storage = self.__firebase.storage()
 
+    def get_url(self, file_name: str):
+        url = self.__storage.child(file_name).get_url(token=None)
+        return url
+
     def upload(self, file_path: str):
         file_name = os.path.basename(file_path)
-
-        # img_url = self.__storage.child(file_name).put(file_path)
-        # print(img_url)
-        # url = self.__storage.child(file_name).get_url(img_url['downloadTokens'])
-        # print(url)
 
         self.__storage.child(file_name).put(file_path)
         url = self.__storage.child(file_name).get_url(token=None)

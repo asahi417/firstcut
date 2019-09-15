@@ -5,7 +5,7 @@ from moviepy import editor
 from .cutoff_methods import CutoffMethods
 from ..util import create_log, combine_audio_video
 
-VALID_FORMAT = ['mp3', 'wav', 'mp4']
+VALID_FORMAT = ['mp3', 'wav', 'm4a', 'mp4']
 LOG = create_log()
 
 
@@ -33,7 +33,6 @@ class AudioEditor:
             LOG.debug(' * video           : %s' % self.__video_format)
         if max_sample_length is not None and len(wave) > max_sample_length:
             raise ValueError('sample data exceeds max sample size: %i > %i' % (len(wave), max_sample_length))
-
 
     @staticmethod
     def __load_audio(file_path):
@@ -64,13 +63,16 @@ class AudioEditor:
         elif file_path.endswith('.mp3'):
             audio_format = 'mp3'
             song = AudioSegment.from_mp3(file_path)
+        elif file_path.endswith('.m4a'):
+            audio_format = 'm4a'
+            song = AudioSegment.from_file(file_path, audio_format)
         elif file_path.endswith('.mp4'):
             audio_format = 'mp3'
             video_format = 'mp4'
             song = AudioSegment.from_file(file_path)
             video = editor.VideoFileClip(file_path)
         else:
-            raise ValueError('unknown format %s (valid format: %s)'% (file_path, VALID_FORMAT))
+            raise ValueError('unknown format %s (valid format: %s)' % (file_path, VALID_FORMAT))
 
         # array.array object
         wave_array = song.get_array_of_samples()
@@ -166,8 +168,10 @@ class AudioEditor:
                 sub_videos = [self.__video.subclip(s, e) for s, e in keep_part_sec]
                 LOG.debug(' * %i sub videos' % len(sub_videos))
                 self.__video = editor.concatenate_videoclips(sub_videos)
+            return True
         else:
             LOG.debug('nothing to process')
+            return False
 
     def write(self, _file: str):
         """ write audio to file (format should be same as the input audio file) """
