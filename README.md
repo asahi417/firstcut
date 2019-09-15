@@ -31,7 +31,7 @@ docker-compose -f docker-compose.yml up
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
 
-Either **file_name**<br /> or **file_path**<br /> is required. 
+Either **file_name** or **file_path** is required. 
 
 - Return:
 
