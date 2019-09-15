@@ -28,5 +28,5 @@ class CutoffMethods:
         ind = int(np.floor(p * len(data)))
         val = single_array_sorted[min(ind, len(data) - 1)]
         LOG.debug('cutoff threshold (percentile method)')
-        LOG.debug(' * percentile cutoff: cutoff (%0.2f with %0.3f percentile)' % (val, p))
+        LOG.debug(' * percentile: %0.2f with %0.3f percentile' % (val, p))
         return int(val)

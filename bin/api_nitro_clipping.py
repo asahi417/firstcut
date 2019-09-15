@@ -202,10 +202,12 @@ def main(debug: bool=False):
 
     app.run(host="0.0.0.0", port=PORT, debug=False)
 
+
 def get_options():
     parser = argparse.ArgumentParser(description='clipping API', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--debug', help='debug mode', action='store_true')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     args = get_options()

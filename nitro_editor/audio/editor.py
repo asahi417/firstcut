@@ -150,7 +150,7 @@ class AudioEditor:
             audio_signal_mask[index] = True
             keep_part_sec.append([i, self.length_sec])
 
-        if len(keep_part_sec) < 0:
+        if len(keep_part_sec) > 0:
             __wave_array_np_list = []
             for wave in self.__wave_array_np_list:
                 audio_signal_masked = wave[audio_signal_mask]
