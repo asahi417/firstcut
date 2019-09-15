@@ -4,7 +4,6 @@ import nitro_editor
 from threading import Thread
 import traceback
 import os
-# import argparse
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError
@@ -32,7 +31,6 @@ FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
 LOG = nitro_editor.util.create_log()
 
 
-# def main(debug_mode: bool=False):
 def main():
     job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
 
@@ -47,19 +45,6 @@ def main():
             else:
                 LOG.info(_msg)
 
-    # if debug_mode:
-    #     LOG.warn('No connection to firebase: local test mode')
-    #     firebase = None
-    # else:
-    #     firebase = nitro_editor.util.FireBaseConnector(
-    #         apiKey=FIREBASE_APIKEY,
-    #         authDomain=FIREBASE_AUTHDOMAIN,
-    #         databaseURL=FIREBASE_DATABASEURL,
-    #         storageBucket=FIREBASE_STORAGEBUCKET,
-    #         serviceAccount=FIREBASE_SERVICE_ACOUNT,
-    #         gmail=FIREBASE_GMAIL,
-    #         password=FIREBASE_PASSWORD
-    #     )
     try:
         firebase = nitro_editor.util.FireBaseConnector(
                 apiKey=FIREBASE_APIKEY,
@@ -242,13 +227,5 @@ def main():
     app.run(host="0.0.0.0", port=PORT, debug=False)
 
 
-# def get_options():
-#     parser = argparse.ArgumentParser(description='clipping API', formatter_class=argparse.RawTextHelpFormatter)
-#     parser.add_argument('--debug', help='debug mode', action='store_true')
-#     return parser.parse_args()
-
-
 if __name__ == '__main__':
     main()
-    # args = get_options()
-    # main(args.debug)
