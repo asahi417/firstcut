@@ -1,9 +1,13 @@
+""" Audio editor """
 import os
 import numpy as np
 from pydub import AudioSegment
 from moviepy import editor
+
 from .cutoff_methods import CutoffMethods
 from ..util import create_log, combine_audio_video
+
+__all__ = ['AudioEditor']
 
 VALID_FORMAT = ['mp3', 'wav', 'm4a', 'mp4']
 LOG = create_log()
@@ -13,8 +17,9 @@ class AudioEditor:
 
     def __init__(self,
                  file_path,
-                 cutoff_method: str='percentile',
-                 max_sample_length: int=None):
+                 cutoff_method: str = 'percentile',
+                 noise_reduction_method: str = 'bandpass',
+                 max_sample_length: int = None):
 
         # load audio data
         self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels, self.__video, self.__video_format = self.__load_audio(file_path)
@@ -97,7 +102,8 @@ class AudioEditor:
 
     def amplitude_clipping(self,
                            min_interval_sec: float,
-                           ratio: float=1.0):
+                           ratio: float=1.0,
+                           return_threshould: bool=False):
         """ Amplitude-based truncation. In given audio signal, where every sampling point has amplitude
         less than `min_amplitude` and the length is greater than `min_interval`, will be removed. Note that
         even if the audio has multi-channel, first channel will be processed.
@@ -168,10 +174,27 @@ class AudioEditor:
                 sub_videos = [self.__video.subclip(s, e) for s, e in keep_part_sec]
                 LOG.debug(' * %i sub videos' % len(sub_videos))
                 self.__video = editor.concatenate_videoclips(sub_videos)
-            return True
+            if return_threshould:
+                return True, min_amplitude
+            else:
+                return True
         else:
             LOG.debug('nothing to process')
-            return False
+            if return_threshould:
+                return False, min_amplitude
+            else:
+                return False
+
+    def vis_amplitude_clipping(self,
+                               ratio: float = 1.0,
+                               path_to_save: str = None):
+        wave = self.__wave_array_np_list[0]
+        self.__cutoff_instance.visualize_cutoff_threshold(
+            wave_data=wave,
+            frame_rate=self.__frame_rate,
+            ratio=ratio,
+            path_to_save=path_to_save
+        )
 
     def write(self, _file: str):
         """ write audio to file (format should be same as the input audio file) """
