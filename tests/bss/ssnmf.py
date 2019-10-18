@@ -24,16 +24,15 @@ def SSNMF(y_o, y_n):
                 Out[1][BasisNoiseNum:BasisNoiseNum+BasisNum,0:])
     eps = np.spacing(1)
 
-    Y_sep = np.abs(Y_o) * (Y_target / (Y_est + eps))
+    Y_sep = np.abs(Y_o)**2 * (Y_target / (Y_est + eps))
     Y_phase = np.cos(np.angle(Y_o) + 1j * np.sin(np.angle(Y_o)))
     y_out = librosa.istft(Y_sep * Y_phase)
-
     return y_out
 
-y, sr = librosa.load('sample_2.wav')
-y_n = y[0:8000]
-y_o, sr = librosa.load('sample_2.wav')
+# y, sr = librosa.load('sample_2.wav')
+# y_n = y[0:8000]
+# y_o, sr = librosa.load('sample_2.wav')
 
-y_out = SSNMF(y_o, y_n)
+# y_out = SSNMF(y_o, y_n)
 
-librosa.output.write_wav("out.wav", y_out, sr)
+# librosa.output.write_wav("out.wav", y_out, sr)
