@@ -1,7 +1,6 @@
 # Nitro-editor
 Audio/video clipping service by detecting silent interval automatically and eliminated them from
-the original file (eg, [raw sound](./sample_files/sample_0.wav) -> [processed sound](./sample_files/sample_0_edit.wav)).
-Firebase storage is used as backend data I/O.  
+the original file. We provide option to use Firebase as backend web data I/O.  
 
 ## Get started with Docker
 Clone the repo
@@ -9,14 +8,12 @@ Clone the repo
 ```
 git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
+docker-compose -f docker-compose.yml up
 ```
 
-[Nitro-editor requires credentials for connecting to firebase storage.](./FIREBASE.md)
-Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
-
-```
-docker-compose -f docker-compose.yml up       
-```
+### With Firebase
+Nitro-editor enable to use firebase as backend I/O.
+You have to provide [credentials for connecting to firebase storage](./FIREBASE.md) to [docker-compose.yml](./docker-compose.yml) file.
 
 ## Service
 ### `audio_clip`
