@@ -1,7 +1,7 @@
 """ Collection of functions to tune cutoff amplitude """
 
 import numpy as np
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 from ..util import create_log
 
 VALID_METHOD_TYPES = ['percentile']
@@ -27,44 +27,44 @@ class CutoffMethods:
         else:
             raise ValueError('unknown `method_type`: %s not in %s' % (self.__method_type, VALID_METHOD_TYPES))
 
-    def visualize_cutoff_threshold(self,
-                                   wave_data,
-                                   frame_rate,
-                                   ratio: float = None,
-                                   path_to_save: str = None):
-        th = self.get_cutoff_amp(wave_data, ratio=ratio)
-
-        fig = plt.figure(figsize=(6, 12))
-        # plot wave and the cutoff threshold
-        plt.subplot(2, 1, 1)
-        plt.plot(wave_data)
-        plt.plot([th] * len(wave_data), color='red', linestyle='--')
-        plt.grid()
-
-        length_sec = int(len(wave_data) / frame_rate) + 1
-        interval = min(10, length_sec)
-        ind_1 = np.arange(0, length_sec + 1, int(length_sec / interval))
-        ind_2 = ind_1 * frame_rate
-        plt.title('Signal (sampling rate: %0.1f Hz)' % frame_rate)
-        plt.xticks(ind_2, ind_1)
-        plt.xlim([0, len(wave_data)])
-        plt.xlabel("Time: total %0.2f sec." % (len(wave_data) / frame_rate))
-        plt.ylabel("Amplitude")
-
-        # plot
-        plt.subplot(2, 1, 2)
-        plt.xticks(rotation=45)
-        amp_sorted = np.sort(np.abs(wave_data))
-        plt.plot(amp_sorted)
-        plt.plot([th] * len(wave_data), color='red', linestyle='--')
-        plt.grid()
-        plt.title('Samples sorted by amplitude')
-        plt.xlim([0, len(wave_data)])
-        plt.xlabel("Cumulative sample size")
-        plt.ylabel("Absolute amplitude")
-
-        if path_to_save is not None:
-            plt.savefig(path_to_save, bbox_inches = 'tight')
+    # def visualize_cutoff_threshold(self,
+    #                                wave_data,
+    #                                frame_rate,
+    #                                ratio: float = None,
+    #                                path_to_save: str = None):
+    #     th = self.get_cutoff_amp(wave_data, ratio=ratio)
+    #
+    #     fig = plt.figure(figsize=(6, 12))
+    #     # plot wave and the cutoff threshold
+    #     plt.subplot(2, 1, 1)
+    #     plt.plot(wave_data)
+    #     plt.plot([th] * len(wave_data), color='red', linestyle='--')
+    #     plt.grid()
+    #
+    #     length_sec = int(len(wave_data) / frame_rate) + 1
+    #     interval = min(10, length_sec)
+    #     ind_1 = np.arange(0, length_sec + 1, int(length_sec / interval))
+    #     ind_2 = ind_1 * frame_rate
+    #     plt.title('Signal (sampling rate: %0.1f Hz)' % frame_rate)
+    #     plt.xticks(ind_2, ind_1)
+    #     plt.xlim([0, len(wave_data)])
+    #     plt.xlabel("Time: total %0.2f sec." % (len(wave_data) / frame_rate))
+    #     plt.ylabel("Amplitude")
+    #
+    #     # plot
+    #     plt.subplot(2, 1, 2)
+    #     plt.xticks(rotation=45)
+    #     amp_sorted = np.sort(np.abs(wave_data))
+    #     plt.plot(amp_sorted)
+    #     plt.plot([th] * len(wave_data), color='red', linestyle='--')
+    #     plt.grid()
+    #     plt.title('Samples sorted by amplitude')
+    #     plt.xlim([0, len(wave_data)])
+    #     plt.xlabel("Cumulative sample size")
+    #     plt.ylabel("Absolute amplitude")
+    #
+    #     if path_to_save is not None:
+    #         plt.savefig(path_to_save, bbox_inches = 'tight')
 
 
     @staticmethod

@@ -9,8 +9,6 @@ build
 *.egg-info
 dist
 
-Voice
-sample_files/*_edit.wav
-sample_files/*_edit.mp4
 docker-compose.dev.yml
 config.sh
+sample_request.sh

@@ -7,22 +7,97 @@ from moviepy import editor
 from .cutoff_methods import CutoffMethods
 from ..util import create_log, combine_audio_video
 
-__all__ = ['AudioEditor']
+__all__ = ['AudioEditor', 'load_audio']
 
-VALID_FORMAT = ['mp3', 'wav', 'm4a', 'mp4']
+# MOV (Apple's movie format), m4a (Apple's sound file format)
+# mov file will be converted to mp4 file
+VALID_FORMAT = [
+    'mp3', 'wav', 'm4a', 'mp4', 'mov',
+    'MP3', 'WAV', 'M4A', 'MP4', 'MOV']
 LOG = create_log()
 
+
+def load_audio(file_path):
+    """ Load audio file
+
+     Parameter
+    -----------
+    file_path: str
+        path to audio file, should be in VALID_FORMAT
+
+     Return
+    -----------
+    wave_array_np_list: list
+        list of numpy array audio signal for each channel
+    audio_format: str
+        audio format
+    frame_rate: int
+        frame rate
+    sample_width: int
+        sample width
+    channels: int
+        channel size
+    """
+    # check file
+    if not os.path.exists(file_path):
+        raise ValueError('No file: %s' % file_path)
+
+    # validate sound file (load as AudioSegment object
+    video, video_format = None, None
+    if file_path.endswith('.wav') or file_path.endswith('.WAV'):
+        audio_format = 'wav'
+        audio = AudioSegment.from_wav(file_path)
+    elif file_path.endswith('.mp3') or file_path.endswith('.MP3'):
+        audio_format = 'mp3'
+        audio = AudioSegment.from_mp3(file_path)
+    elif file_path.endswith('.m4a') or file_path.endswith('.M4A'):
+        audio_format = 'm4a'
+        audio = AudioSegment.from_file(file_path, audio_format)
+    elif file_path.endswith('.mp4') or file_path.endswith('.MP4') \
+        or file_path.endswith('.mov') or file_path.endswith('.MOV'):
+        audio_format = 'mp3'
+        video_format = 'mp4'
+        audio = AudioSegment.from_file(file_path)
+        video = editor.VideoFileClip(file_path)
+    else:
+        raise ValueError('unknown format %s (valid format: %s)' % (file_path, VALID_FORMAT))
+
+    # array.array object
+    wave_array = audio.get_array_of_samples()
+    # numpy array
+    wave_array_np = np.array(wave_array)
+    # if stereo (channel > 1)
+    if audio.channels != 1:
+        if audio.channels > 2:
+            raise ValueError('audio has more than two channel: %i' % audio.channels)
+        wave_array_np_left = wave_array_np[0:len(wave_array_np):2]
+        wave_array_np_right = wave_array_np[1:len(wave_array_np):2]
+        wave_array_np_list = [wave_array_np_left, wave_array_np_right]
+    else:
+        wave_array_np_list = [wave_array_np]
+
+    # information of audio file
+    frame_rate = audio.frame_rate
+    sample_width = audio.sample_width
+    channels = audio.channels
+
+    return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format
 
 class AudioEditor:
 
     def __init__(self,
                  file_path,
                  cutoff_method: str = 'percentile',
-                 noise_reduction_method: str = 'bandpass',
                  max_sample_length: int = None):
+        """
+
+        :param file_path:
+        :param cutoff_method:
+        :param max_sample_length:
+        """
 
         # load audio data
-        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels, self.__video, self.__video_format = self.__load_audio(file_path)
+        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels, self.__video, self.__video_format = load_audio(file_path)
         self.__cutoff_instance = CutoffMethods(cutoff_method)
         wave = self.__wave_array_np_list
         LOG.debug('audio info')
@@ -38,67 +113,6 @@ class AudioEditor:
             LOG.debug(' * video           : %s' % self.__video_format)
         if max_sample_length is not None and len(wave) > max_sample_length:
             raise ValueError('sample data exceeds max sample size: %i > %i' % (len(wave), max_sample_length))
-
-    @staticmethod
-    def __load_audio(file_path):
-        """ Load audio file
-
-         Parameter
-        -----------
-        file_path: str
-            path to audio file, should be in VALID_FORMAT
-
-         Return
-        -----------
-        wave_array_np_list: list of numpy array audio signal for each channel
-        audio_format: audio format
-        frame_rate: frame rate
-        sample_width: sample width
-        channels: channel size
-        """
-        # check file
-        if not os.path.exists(file_path):
-            raise ValueError('No file: %s' % file_path)
-
-        # validate sound file (load as AudioSegment object
-        video, video_format = None, None
-        if file_path.endswith('.wav'):
-            audio_format = 'wav'
-            song = AudioSegment.from_wav(file_path)
-        elif file_path.endswith('.mp3'):
-            audio_format = 'mp3'
-            song = AudioSegment.from_mp3(file_path)
-        elif file_path.endswith('.m4a'):
-            audio_format = 'm4a'
-            song = AudioSegment.from_file(file_path, audio_format)
-        elif file_path.endswith('.mp4'):
-            audio_format = 'mp3'
-            video_format = 'mp4'
-            song = AudioSegment.from_file(file_path)
-            video = editor.VideoFileClip(file_path)
-        else:
-            raise ValueError('unknown format %s (valid format: %s)' % (file_path, VALID_FORMAT))
-
-        # array.array object
-        wave_array = song.get_array_of_samples()
-        # numpyp array
-        wave_array_np = np.array(wave_array)
-        # if stereo (channel > 1)
-        if song.channels != 1:
-            if song.channels > 2:
-                raise ValueError('audio has more than two channel: %i' % song.channels)
-            wave_array_np_left = wave_array_np[0:len(wave_array_np):2]
-            wave_array_np_right = wave_array_np[1:len(wave_array_np):2]
-            wave_array_np_list = [wave_array_np_left, wave_array_np_right]
-        else:
-            wave_array_np_list = [wave_array_np]
-
-        # information of audio file
-        frame_rate = song.frame_rate
-        sample_width = song.sample_width
-        channels = song.channels
-
-        return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format
 
     def amplitude_clipping(self,
                            min_interval_sec: float,
@@ -185,19 +199,26 @@ class AudioEditor:
             else:
                 return False
 
-    def vis_amplitude_clipping(self,
-                               ratio: float = 1.0,
-                               path_to_save: str = None):
-        wave = self.__wave_array_np_list[0]
-        self.__cutoff_instance.visualize_cutoff_threshold(
-            wave_data=wave,
-            frame_rate=self.__frame_rate,
-            ratio=ratio,
-            path_to_save=path_to_save
-        )
+    # def vis_amplitude_clipping(self,
+    #                            ratio: float = 1.0,
+    #                            path_to_save: str = None):
+    #     wave = self.__wave_array_np_list[0]
+    #     self.__cutoff_instance.visualize_cutoff_threshold(
+    #         wave_data=wave,
+    #         frame_rate=self.__frame_rate,
+    #         ratio=ratio,
+    #         path_to_save=path_to_save
+    #     )
 
-    def write(self, _file: str):
-        """ write audio to file (format should be same as the input audio file) """
+    def write(self,
+              _file: str):
+        """ Write audio to file (format should be same as the input audio file)
+
+         Parameter
+        ----------
+        _file: str
+            file name to save
+        """
 
         def validate_path(__path):
             if os.path.exists(__path):
@@ -249,8 +270,11 @@ class AudioEditor:
         return self.__wave_array_np_list
 
     @property
-    def audio_format(self):
-        return self.__audio_format
+    def format(self):
+        if self.__video is None:
+            return self.__audio_format
+        else:
+            return self.__video_format
 
     @property
     def frame_rate(self):

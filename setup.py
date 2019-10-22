@@ -25,7 +25,6 @@ setup(
         'pandas',
         'flask',
         'werkzeug',
-        # 'soundfile',
         'urllib3',
         'moviepy',
         'pyrebase',

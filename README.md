@@ -21,19 +21,23 @@ docker-compose -f docker-compose.yml up
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav"}' http://0.0.0.0:8008/audio_clip`
+- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav", "cutoff_ratio": "0.7"}' http://0.0.0.0:8008/audio_clip`
+
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
 | **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
-| **file_path**<br />_(\* required)_        |  -                   | absolute file path to local file |
+| **file_path**<br />_(\* required)_        |  -                   | absolute file path to local file (for local test) |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
 
 Either **file_name** or **file_path** is required.
+If only **file_path** is provided, the processed file will be 
+saved under `${TMP_DIR}/nitro_editor_data/tmp_files/`. 
 
-- Valid file format: `['mp3', 'wav', 'm4a', 'mp4']` 
+
+- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']` 
 
 - Return:
 
@@ -110,6 +114,7 @@ Environment variables:
 | **PORT**                   | `8008`  | port to host the server on                                                                          |
 | **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
 | **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
+| **TMP_DIR**                | `~`     | directory where the files to be saved |
 | **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
 | **FIREBASE_APIKEY**        |         | apiKey |
 | **FIREBASE_AUTHDOMAIN**    |         | authDomain |
