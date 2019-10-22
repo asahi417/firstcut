@@ -1,6 +1,6 @@
 import numpy as np
 import librosa
-
+from scipy import ndimage
 import nmf
 
 def SSNMF(y_o, y_n):
@@ -24,7 +24,11 @@ def SSNMF(y_o, y_n):
                 Out[1][BasisNoiseNum:BasisNoiseNum+BasisNum,0:])
     eps = np.spacing(1)
 
-    Y_sep = np.abs(Y_o)**2 * (Y_target / (Y_est + eps))
+    # Smoosing
+    Y_mask = Y_target / (Y_est + eps)
+    Y_mask = ndimage.filters.gaussian_filter(Y_mask, 3)
+
+    Y_sep = np.abs(Y_o)**2 * Y_mask
     Y_phase = np.cos(np.angle(Y_o) + 1j * np.sin(np.angle(Y_o)))
     y_out = librosa.istft(Y_sep * Y_phase)
     return y_out
