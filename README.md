@@ -18,14 +18,13 @@ You have to provide [credentials for connecting to firebase storage](./FIREBASE.
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav", "cutoff_ratio": "0.7"}' http://0.0.0.0:8008/audio_clip`
+- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav", "cutoff_ratio": "0.9"}' http://0.0.0.0:8008/audio_clip`
 
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
-| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
-| **file_path**<br />_(\* required)_        |  -                   | absolute file path to local file (for local test) |
+| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase (in local mode, absolute file path to local file) |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
 
