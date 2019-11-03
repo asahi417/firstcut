@@ -5,7 +5,7 @@ from pydub import AudioSegment
 from moviepy import editor
 
 from .cutoff_methods import CutoffMethods
-from ..util import create_log, combine_audio_video
+from ..util import create_log, combine_audio_video, mov_to_mp4
 
 __all__ = ['AudioEditor', 'load_audio']
 
@@ -37,13 +37,15 @@ def load_audio(file_path):
         sample width
     channels: int
         channel size
+    convert_mov: bool
+        if mov file has been converted
     """
     # check file
     if not os.path.exists(file_path):
         raise ValueError('No file: %s' % file_path)
 
     # validate sound file (load as AudioSegment object
-    video, video_format = None, None
+    video, video_format, convert_mov = None, None, False
     if file_path.endswith('.wav') or file_path.endswith('.WAV'):
         audio_format = 'wav'
         audio = AudioSegment.from_wav(file_path)
@@ -53,12 +55,17 @@ def load_audio(file_path):
     elif file_path.endswith('.m4a') or file_path.endswith('.M4A'):
         audio_format = 'm4a'
         audio = AudioSegment.from_file(file_path, audio_format)
-    elif file_path.endswith('.mp4') or file_path.endswith('.MP4') \
-        or file_path.endswith('.mov') or file_path.endswith('.MOV'):
+    elif file_path.endswith('.mp4') or file_path.endswith('.MP4')\
+            or file_path.endswith('.mov') or file_path.endswith('.MOV'):
+        if file_path.endswith('.mov') or file_path.endswith('.MOV'):
+            # mov format needs to be converted to mp4 firstly
+            LOG.debug('convert MOV to mp4')
+            file_path, _ = mov_to_mp4(file_path)
         audio_format = 'mp3'
         video_format = 'mp4'
         audio = AudioSegment.from_file(file_path)
         video = editor.VideoFileClip(file_path)
+        convert_mov = True
     else:
         raise ValueError('unknown format %s (valid format: %s)' % (file_path, VALID_FORMAT))
 
@@ -81,23 +88,30 @@ def load_audio(file_path):
     sample_width = audio.sample_width
     channels = audio.channels
 
-    return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format
+    return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format, convert_mov
 
 class AudioEditor:
+    """ Audio based video editor """
 
     def __init__(self,
                  file_path,
                  cutoff_method: str = 'percentile',
                  max_sample_length: int = None):
-        """
+        """ Audio based video editor
 
-        :param file_path:
-        :param cutoff_method:
-        :param max_sample_length:
+         Parameter
+        -------------
+        file_path: str
+            absolute path to file name
+        cutoff_method: str
+            cutoff method
+        max_sample_length: int
+            max sample length for audio file
         """
 
         # load audio data
-        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels, self.__video, self.__video_format = load_audio(file_path)
+        self.__wave_array_np_list, self.__audio_format, self.__frame_rate, self.__sample_width, self.__channels,\
+            self.__video, self.__video_format, self.__convert_mov = load_audio(file_path)
         self.__cutoff_instance = CutoffMethods(cutoff_method)
         wave = self.__wave_array_np_list
         LOG.debug('audio info')
@@ -141,6 +155,7 @@ class AudioEditor:
         LOG.debug('masked sample       : %i' % (wave.shape[0] - np.sum(audio_signal_mask)))
 
         flg = False
+        edit_flg = False
         count = 0
         index = []
         keep_part_sec = []
@@ -188,16 +203,18 @@ class AudioEditor:
                 sub_videos = [self.__video.subclip(s, e) for s, e in keep_part_sec]
                 LOG.debug(' * %i sub videos' % len(sub_videos))
                 self.__video = editor.concatenate_videoclips(sub_videos)
-            if return_threshould:
-                return True, min_amplitude
-            else:
-                return True
+                edit_flg = True
         else:
-            LOG.debug('nothing to process')
-            if return_threshould:
-                return False, min_amplitude
+            if self.__convert_mov:
+                edit_flg = True
+                LOG.debug('nothing to process (only MOV conversion to mp4)')
             else:
-                return False
+                LOG.debug('nothing to process')
+
+        if return_threshould:
+            return edit_flg, min_amplitude
+        else:
+            return edit_flg
 
     # def vis_amplitude_clipping(self,
     #                            ratio: float = 1.0,
