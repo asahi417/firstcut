@@ -15,7 +15,7 @@ CORS(app)
 # CONFIG
 TMP_DIR = os.getenv('TMP_DIR', os.path.expanduser("~"))
 PORT = int(os.getenv("PORT", "8008"))
-MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.2"))
+MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.12"))
 CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.9"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
@@ -174,17 +174,8 @@ def main(local_mode: bool=False):
         post_body = request.get_json()
 
         file_name = post_body.get('file_name', '')
-        # file_path = post_body.get('file_path', '')
         if file_name == "":
             return BadRequest('Parameter `file_name` is required')
-            # if firebase is None:
-            #     return BadRequest('No connection to Firebase, can not use `file_name` option')
-            # _file = file_name
-        # elif file_path != "":
-        #     _file = file_path
-        #     if_local = True
-        # else:
-        #     return BadRequest("either `file_name` or `file_path` should be provided")
         if not len(os.path.basename(file_name).split('.')) > 1:
             return BadRequest('file dose not have any identifiers: %s' % file_name)
         logging(' * parameter `file_name`: %s' % file_name)
