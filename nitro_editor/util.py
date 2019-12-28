@@ -1,3 +1,4 @@
+import json
 import os
 import pyrebase
 import subprocess
@@ -12,6 +13,7 @@ __all__ = [
     'FireBaseConnector',
     'mov_to_mp4'
 ]
+
 
 def mov_to_mp4(video_file,
                force: bool=False):
@@ -201,16 +203,34 @@ class FireBaseConnector:
         password: Credential
         serviceAccount: Credential
         """
+        path = self.write_json_file(serviceAccount, './tmp_firebase_service_account.json')
+
         self.__firebase = pyrebase.initialize_app(
             dict(apiKey=apiKey,
                  authDomain=authDomain,
                  databaseURL=databaseURL,
                  storageBucket=storageBucket,
-                 serviceAccount=serviceAccount)
+                 serviceAccount=path)
         )
         auth = self.__firebase.auth()
         auth.sign_in_with_email_and_password(gmail, password)
         self.__storage = self.__firebase.storage()
+
+    @staticmethod
+    def write_json_file(dictionary_obj, path):
+        if type(dictionary_obj) is str:
+            dictionary_obj = json.loads(dictionary_obj)
+        elif type(dictionary_obj) is dict:
+            pass
+        else:
+            return None
+
+        if os.path.exists(path):
+            os.system('rm -rf %s' % path)
+
+        with open(path, 'w') as f:
+            json.dump(dictionary_obj, f)
+        return path
 
     def get_url(self, file_name: str):
         url = self.__storage.child(file_name).get_url(token=None)
