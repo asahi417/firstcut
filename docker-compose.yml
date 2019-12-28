@@ -13,6 +13,6 @@ services:
         FIREBASE_GMAIL: ""
         FIREBASE_PASSWORD: ""
     volumes:
-      - {path-to-credentials}:/opt/app/credentials
+      - /tmp:/opt/app/credentials
     ports:
      - "8008:8008"

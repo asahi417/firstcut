@@ -4,6 +4,7 @@ import nitro_editor
 from threading import Thread
 import traceback
 import os
+import argparse
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, InternalServerError
@@ -11,91 +12,136 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 app = Flask(__name__)
 CORS(app)
 
-ROOT_DIR = os.path.expanduser("~")
-
+# CONFIG
+TMP_DIR = os.getenv('TMP_DIR', os.path.expanduser("~"))
 PORT = int(os.getenv("PORT", "8008"))
-MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.2"))
-CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.7"))
+MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.12"))
+CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.9"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
-
 FIREBASE_SERVICE_ACOUNT = os.getenv('FIREBASE_SERVICE_ACOUNT', None)
 FIREBASE_APIKEY = os.getenv('FIREBASE_APIKEY', None)
 FIREBASE_AUTHDOMAIN = os.getenv('FIREBASE_AUTHDOMAIN', None)
 FIREBASE_DATABASEURL = os.getenv('FIREBASE_DATABASEURL', None)
 FIREBASE_STORAGEBUCKET = os.getenv('FIREBASE_STORAGEBUCKET', None)
-
 FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
 FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
+MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 300))
 
-LOG = nitro_editor.util.create_log()
 
+def main(local_mode: bool=False):
+    """ Main API server
 
-def main():
+     Parameter
+    ---------------
+    local_mode: bool
+        local testing mode
+    """
     job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
+    logger = nitro_editor.util.create_log()
 
-    def logging(_msg, _job_id, debug: bool = False, error: bool = False):
+    def logging(_msg,
+                _job_id: str = None,
+                debug: bool = False,
+                error: bool = False):
+        """ Logger (as default INFO)
+
+         Parameter
+        -----------
+        _msg: str
+            log message
+        _job_id: str
+            unique job id
+        debug: bool
+            log as debug
+        error: bool
+            log as error
+        """
         if error:
-            job_status_instance.error(job_id=_job_id, error_message=_msg)
-            LOG.error('job_id `%s` raises InternalServerError\n %s' % (_job_id, _msg))
+            if _job_id is not None:
+                job_status_instance.error(job_id=_job_id, error_message=_msg)
+            logger.error('job_id `%s` raises InternalServerError\n %s' % (_job_id, _msg))
         else:
-            job_status_instance.update(job_id=_job_id, status=' - uploading processed data')
+            if _job_id is not None:
+                job_status_instance.update(job_id=_job_id, status=' - uploading processed data')
             if debug:
-                LOG.debug(_msg)
+                logger.debug(_msg)
             else:
-                LOG.info(_msg)
+                logger.info(_msg)
 
-    try:
-        firebase = nitro_editor.util.FireBaseConnector(
-                apiKey=FIREBASE_APIKEY,
-                authDomain=FIREBASE_AUTHDOMAIN,
-                databaseURL=FIREBASE_DATABASEURL,
-                storageBucket=FIREBASE_STORAGEBUCKET,
-                serviceAccount=FIREBASE_SERVICE_ACOUNT,
-                gmail=FIREBASE_GMAIL,
-                password=FIREBASE_PASSWORD
-            )
-    except Exception:
-        LOG.warn('No connection to firebase, local test mode with following error\n %s' % traceback.format_exc())
+    # connect to firebaase
+    if local_mode:
         firebase = None
+        logging('local test mode: No firebase backend')
+    else:
+        try:
+            firebase = nitro_editor.util.FireBaseConnector(
+                    apiKey=FIREBASE_APIKEY,
+                    authDomain=FIREBASE_AUTHDOMAIN,
+                    databaseURL=FIREBASE_DATABASEURL,
+                    storageBucket=FIREBASE_STORAGEBUCKET,
+                    serviceAccount=FIREBASE_SERVICE_ACOUNT,
+                    gmail=FIREBASE_GMAIL,
+                    password=FIREBASE_PASSWORD
+                )
+        except Exception:
+            logging('No connection to firebase, local test mode with following error\n %s' % traceback.format_exc())
+            firebase = None
+            local_mode = True
 
     # directory where audio/video files are temporarily stored
-    tmp_storage = os.path.join(ROOT_DIR, 'nitro_editor_data', 'tmp_files')
+    tmp_storage = os.path.join(TMP_DIR, 'nitro_editor_data', 'tmp_files')
     if not os.path.exists(tmp_storage):
         os.makedirs(tmp_storage, exist_ok=True)
 
-    def process(job_id,
-                file_name,
-                min_interval_sec,
-                ratio,
-                if_local):
+    def audio_clip_process(job_id,
+                           file_name,
+                           min_interval_sec,
+                           ratio):
+        """ Audio clip process function
+
+         Parameter
+        ------------
+        job_id: str
+            unique job id
+        file_name: str
+            file name to process
+        min_interval_sec: float
+            minimum interval seconds
+        ratio: float
+            ratio to retrieve
+        """
         try:
             logging('validate file_name', job_id, debug=True)
             basename = os.path.basename(file_name)
-            name, identifier = basename.split('.')
+            name, raw_format = basename.split('.')
 
-            if if_local:
+            if local_mode:
                 path_file = file_name
             else:
-                path_file = os.path.join(tmp_storage, '%s_%s_raw.%s' % (name, job_id, identifier))
+                path_file = os.path.join(tmp_storage, '%s_%s_raw.%s' % (name, job_id, raw_format))
                 if not os.path.exists(path_file):
                     logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
                     firebase.download(file_name=file_name, path=path_file)
 
-            path_save = os.path.join(tmp_storage, '%s_%s_processed.%s' % (name, job_id, identifier))
-
             logging('start processing', job_id, debug=True)
             editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
+            if editor.length_sec > MAX_LENGTH_SEC:
+                logging('Too long length: %i sec > %i sec' % (editor.length_sec, MAX_LENGTH_SEC), job_id, error=True)
+                return
+
             flg_processed = editor.amplitude_clipping(min_interval_sec=min_interval_sec, ratio=ratio)
+
             if not flg_processed:
-                if if_local:
+                if local_mode:
                     url = file_name
                 else:
                     url = firebase.get_url(file_name)
             else:
                 logging('save tmp folder: %s' % tmp_storage, job_id, debug=True)
+                path_save = os.path.join(tmp_storage, '%s_%s_processed.%s' % (name, job_id, editor.format))
                 editor.write(path_save)
-                if if_local:
+                if local_mode:
                     url = path_save
                 else:
                     logging('upload to firebase', job_id, debug=True)
@@ -113,26 +159,9 @@ def main():
 
     @app.route("/audio_clip", methods=["POST"])
     def audio_clip():
-        """ Audio clip API endpoint
+        """ Audio clip API endpoint """
 
-        - Description: POST API to truncate wav audio file.
-        - Endpoint: `audio_clip`
-        - Parameters:
-
-        | Parameter name                      | Default              | Description
-        | ----------------------------------- | -------------------- | -------------------------------
-        | **file_name**<br />_(\* required)_  |  -                   | file name in firebase project
-        | **file_path**<br />_(\* required)_  |  -                   | local file path
-        | **min_interval_sec**                | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec)
-        | **cutoff_ratio**                    | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1
-
-        - Return:
-        | Name       | Description
-        | ---------- | --------------
-        | **job_id** | unique job id
-        """
-
-        LOG.info('audio_clip: new request')
+        logging('audio_clip: new request')
 
         # check request form
         if request.method != "POST":
@@ -145,37 +174,30 @@ def main():
         post_body = request.get_json()
 
         file_name = post_body.get('file_name', '')
-        file_path = post_body.get('file_path', '')
-        if file_name != "":
-            if firebase is None:
-                return BadRequest('No connection to Firebase, can not use `file_name` option')
-            _file = file_name
-            if_local = False
-        elif file_path != "":
-            _file = file_path
-            if_local = True
-        else:
-            return BadRequest("either `file_name` or `file_path` should be provided")
-        if not len(os.path.basename(_file).split('.')) > 1:
-            return BadRequest('file dose not have any identifiers: %s' % _file)
-        LOG.info(' * parameter `file`: %s' % _file)
+        if file_name == "":
+            return BadRequest('Parameter `file_name` is required')
+        if not len(os.path.basename(file_name).split('.')) > 1:
+            return BadRequest('file dose not have any identifiers: %s' % file_name)
+        logging(' * parameter `file_name`: %s' % file_name)
 
         min_interval_sec = post_body.get('min_interval_sec', '')
         valid_flg, value_or_msg = nitro_editor.util.validate_numeric(min_interval_sec, MIN_INTERVAL_SEC, 0.0, 10000, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
         min_interval_sec = value_or_msg
+        logging(' * parameter `min_interval_sec`: %s' % str(min_interval_sec))
 
         cutoff_ratio = post_body.get('cutoff_ratio', '')
         valid_flg, value_or_msg = nitro_editor.util.validate_numeric(cutoff_ratio, CUTOFF_RATIO, 0.0, 1.0, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
         cutoff_ratio = value_or_msg
+        logging(' * parameter `cutoff_ratio`: %s' % str(cutoff_ratio))
 
         # run process
         job_id = job_status_instance.register_job()
-        LOG.info(' - job_id: %s' % job_id)
-        thread = Thread(target=process, args=[job_id, _file, min_interval_sec, cutoff_ratio, if_local])
+        logging(' - job_id: %s' % job_id)
+        thread = Thread(target=audio_clip_process, args=[job_id, file_name, min_interval_sec, cutoff_ratio])
         thread.start()
         return jsonify(job_id=job_id)
 
@@ -213,12 +235,12 @@ def main():
         file_name = request.args.get("file_name")
         try:
             if file_name == 'all':
-                LOG.info('remove all files on firebase')
+                logging('remove all files on firebase')
                 removed = firebase.remove(None)
             elif file_name == '':
                 return BadRequest('`job_id` is required.')
             else:
-                LOG.info('remove %s files on firebase' % str(file_name))
+                logging('remove %s files on firebase' % str(file_name))
                 removed = firebase.remove(file_name)
             return jsonify(removed_files=removed)
         except Exception:
@@ -227,5 +249,13 @@ def main():
     app.run(host="0.0.0.0", port=PORT, debug=False)
 
 
+
+def get_options():
+    parser = argparse.ArgumentParser(description='Training',
+                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('--local_mode', help='local mode', action='store_true')
+    return parser.parse_args()
+
 if __name__ == '__main__':
-    main()
+    args = get_options()
+    main(args.local_mode)

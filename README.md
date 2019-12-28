@@ -1,7 +1,6 @@
 # Nitro-editor
 Audio/video clipping service by detecting silent interval automatically and eliminated them from
-the original file (eg, [raw sound](./sample_files/sample_0.wav) -> [processed sound](./sample_files/sample_0_edit.wav)).
-Firebase storage is used as backend data I/O.  
+the original file. We provide option to use Firebase as backend web data I/O.  
 
 ## Get started with Docker
 Clone the repo
@@ -9,31 +8,43 @@ Clone the repo
 ```
 git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
+docker-compose -f docker-compose.yml up
 ```
 
+<<<<<<< HEAD
 [Nitro-editor requires credentials for connecting to firebase storage.](./asssets/FIREBASE.md)
 Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
 
 ```
 docker-compose -f docker-compose.yml up       
 ```
+=======
+### With Firebase
+Nitro-editor enable to use firebase as backend I/O.
+You have to provide [credentials for connecting to firebase storage](./FIREBASE.md) to [docker-compose.yml](./docker-compose.yml) file.
+>>>>>>> 10d14b1698d09a32c1d37f71d1bd775089e94c09
 
 To deploy the image to gcp project, see [here](./asssets/DEPLOY_GCP.md)
 
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav"}' http://0.0.0.0:8008/audio_clip`
+- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav", "cutoff_ratio": "0.9"}' http://0.0.0.0:8008/audio_clip`
+
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
-| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
-| **file_path**<br />_(\* required)_        |  -                   | absolute file path to local file |
+| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase (in local mode, absolute file path to local file) |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
 
-Either **file_name** or **file_path** is required. 
+Either **file_name** or **file_path** is required.
+If only **file_path** is provided, the processed file will be 
+saved under `${TMP_DIR}/nitro_editor_data/tmp_files/`. 
+
+
+- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']` 
 
 - Return:
 
@@ -110,6 +121,7 @@ Environment variables:
 | **PORT**                   | `8008`  | port to host the server on                                                                          |
 | **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
 | **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
+| **TMP_DIR**                | `~`     | directory where the files to be saved |
 | **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
 | **FIREBASE_APIKEY**        |         | apiKey |
 | **FIREBASE_AUTHDOMAIN**    |         | authDomain |
