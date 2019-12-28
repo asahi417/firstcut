@@ -11,18 +11,12 @@ cd nitro_editor
 docker-compose -f docker-compose.yml up
 ```
 
-<<<<<<< HEAD
 [Nitro-editor requires credentials for connecting to firebase storage.](./asssets/FIREBASE.md)
 Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
 
 ```
 docker-compose -f docker-compose.yml up       
 ```
-=======
-### With Firebase
-Nitro-editor enable to use firebase as backend I/O.
-You have to provide [credentials for connecting to firebase storage](./FIREBASE.md) to [docker-compose.yml](./docker-compose.yml) file.
->>>>>>> 10d14b1698d09a32c1d37f71d1bd775089e94c09
 
 To deploy the image to gcp project, see [here](./asssets/DEPLOY_GCP.md)
 
