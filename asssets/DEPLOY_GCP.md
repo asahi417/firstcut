@@ -34,3 +34,5 @@ Upload on gcp project
 ```
 $ gcloud docker -- push gcr.io/${GCP_PROJECT_ID}/nitro_editor_api
 ```
+
+Check if the images has been deployed from [console](https://console.cloud.google.com/gcr/images/nitro-test-project?project=nitro-test-project). 
