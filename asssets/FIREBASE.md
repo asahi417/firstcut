@@ -18,6 +18,6 @@ Go to project page (`https://console.firebase.google.com/project/{project name}/
  See the procedure more in detail [here](https://stackoverflow.com/questions/41082171/firebase-permission-denied-with-pyrebase-library/41253388#41253388).  
 
 ### Edit docker-compose
-Now, you should have all the credentials required in [docker-compose.yml](./docker-compose.yml) file, so 
+Now, you should have all the credentials required in [docker-compose.yml](../docker-compose.yml) file, so 
 please fulfil by the credentials 
 

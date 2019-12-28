@@ -11,12 +11,14 @@ git clone https://github.com/asahi417/nitro_editor
 cd nitro_editor
 ```
 
-[Nitro-editor requires credentials for connecting to firebase storage.](./FIREBASE.md)
+[Nitro-editor requires credentials for connecting to firebase storage.](./asssets/FIREBASE.md)
 Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
 
 ```
 docker-compose -f docker-compose.yml up       
 ```
+
+To deploy the image to gcp project, see [here](./asssets/DEPLOY_GCP.md)
 
 ## Service
 ### `audio_clip`
