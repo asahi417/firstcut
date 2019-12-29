@@ -5,14 +5,5 @@ services:
       context: .
       args:
         PORT: "8008"
-        FIREBASE_SERVICE_ACOUNT: ""
-        FIREBASE_APIKEY: ""
-        FIREBASE_AUTHDOMAIN: ""
-        FIREBASE_DATABASEURL: ""
-        FIREBASE_STORAGEBUCKET: ""
-        FIREBASE_GMAIL: ""
-        FIREBASE_PASSWORD: ""
-    volumes:
-      - /tmp:/opt/app/credentials
     ports:
      - "8008:8008"

@@ -3,7 +3,7 @@ Audio/video clipping service by detecting silent interval automatically and elim
 the original file. We provide option to use Firebase as backend web data I/O.  
 
 ## Get started with Docker
-Clone the repo
+Clone the repo and build docker composer file (see [here](./assets/RUN_WITHOUT_DOCKER.md) for running without docker).
 
 ```
 git clone https://github.com/asahi417/nitro_editor
@@ -11,20 +11,16 @@ cd nitro_editor
 docker-compose -f docker-compose.yml up
 ```
 
-[Nitro-editor requires credentials for connecting to firebase storage.](./asssets/FIREBASE.md)
-Once you've setup [docker-compose file](./docker-compose.yml), build and run docker-composer.
-
-```
-docker-compose -f docker-compose.yml up       
-```
-
-To deploy the image to gcp project, see [here](./asssets/DEPLOY_GCP.md)
+As default, it works as a local service,
+but the app can run with firebase backend as well, which requires
+[credentials for connecting to firebase storage](assets/FIREBASE.md),
+and [SSL certificate](./assets/SSL.md) to be included in [docker-composer](./docker-compose.yml) file.
+To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
 
 ## Service
 ### `audio_clip`
 - Description: POST API to truncate wav audio file.
-- Sample: `curl -i -H "Content-Type: application/json" -X POST -d '{"file_name": "sample_0.wav", "cutoff_ratio": "0.9"}' http://0.0.0.0:8008/audio_clip`
-
+- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
@@ -32,14 +28,7 @@ To deploy the image to gcp project, see [here](./asssets/DEPLOY_GCP.md)
 | **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase (in local mode, absolute file path to local file) |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
-
-Either **file_name** or **file_path** is required.
-If only **file_path** is provided, the processed file will be 
-saved under `${TMP_DIR}/nitro_editor_data/tmp_files/`. 
-
-
-- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']` 
-
+ 
 - Return:
 
 | Name       | Description                                     |
@@ -50,7 +39,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `job_status`
 - Description: GET API for job status
-- Sample" `curl http://0.0.0.0:8008/job_status\?job_id\=zqtlnxepvd`
 - Parameters:
 
 | Parameter name                  | Default | Description                                                                         |
@@ -78,7 +66,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `drop_job_status`
 - Description: GET API to drop completed job status. Server will keep all the job status, unless you request this method. 
-
 - Return:
 
 | return name         | Description    |
@@ -87,7 +74,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 
 ### `drop_file_firebase`
 - Description: GET API to remove file on firebase 
-
 - Parameters:
 
 | Parameter name   | Default | Description                                                                         |
@@ -100,42 +86,3 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | return name         | Description           |
 | ------------------- | --------------------- |
 | **removed_files**   | list of removed files |
-
-
-## Others
-### Build by pip
-Instead of build by docker-compose, one can manually build with pip and run the script to launch 
-API server
-
-1. ***Set up environment variables***  
-Environment variables:
-
-| Environment variable name  | Default | Description                                                                                         |
-| -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| **PORT**                   | `8008`  | port to host the server on                                                                          |
-| **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
-| **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
-| **TMP_DIR**                | `~`     | directory where the files to be saved |
-| **FIREBASE_SERVICE_ACOUNT**|         | path to serviceAccount file |
-| **FIREBASE_APIKEY**        |         | apiKey |
-| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
-| **FIREBASE_DATABASEURL**   |         | databaseURL |
-| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
-| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
-| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
-
-2. ***install ffmpeg***  
-On Mac
-```
-brew install ffmpeg 
-```
-On ubuntu 
-```
-sudo apt install ffmpeg
-```
-
-3. ***install & run API server***    
-```
-pip install -e .
-python ./bin/api_nitro_clipping.py
-```

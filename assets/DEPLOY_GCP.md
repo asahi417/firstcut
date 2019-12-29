@@ -1,4 +1,4 @@
-# Register docker image to container registry
+# Register docker image to container registry service
 ## Registration
 Enable docker registry [here](https://console.cloud.google.com/apis/library/containerregistry.googleapis.com?project=nitro-test-project).
 

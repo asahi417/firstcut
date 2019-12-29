@@ -28,6 +28,10 @@ FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
 FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
 MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 300))
 
+# SSL CERTS
+SSL_CERTIFICATE = os.getenv('SSL_CERTIFICATE', None)
+SSL_KEY = os.getenv('SSL_KEY', None)
+
 
 def main(local_mode: bool=False):
     """ Main API server
@@ -246,15 +250,18 @@ def main(local_mode: bool=False):
         except Exception:
             return InternalServerError(traceback.format_exc())
 
-    app.run(host="0.0.0.0", port=PORT, debug=False)
-
+    if SSL_KEY is not None and SSL_CERTIFICATE is not None:
+        logging('use SSL: (%s, %s)' % (SSL_KEY, SSL_CERTIFICATE))
+        app.run(host="0.0.0.0", port=PORT, debug=False, ssl_context=(SSL_CERTIFICATE, SSL_KEY), threaded=True)
+    else:
+        app.run(host="0.0.0.0", port=PORT, debug=False)
 
 
 def get_options():
-    parser = argparse.ArgumentParser(description='Training',
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description='Training', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--local_mode', help='local mode', action='store_true')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     args = get_options()

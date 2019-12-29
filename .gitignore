@@ -16,3 +16,4 @@ config.sh
 sample_request.sh
 
 tmp_firebase_service_account.json
+ssl_files
