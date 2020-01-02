@@ -19,7 +19,7 @@ MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.12"))
 CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.9"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
-FIREBASE_SERVICE_ACOUNT = os.getenv('FIREBASE_SERVICE_ACOUNT', None)
+FIREBASE_SERVICE_ACCOUNT = os.getenv('FIREBASE_SERVICE_ACCOUNT', None)
 FIREBASE_APIKEY = os.getenv('FIREBASE_APIKEY', None)
 FIREBASE_AUTHDOMAIN = os.getenv('FIREBASE_AUTHDOMAIN', None)
 FIREBASE_DATABASEURL = os.getenv('FIREBASE_DATABASEURL', None)
@@ -84,7 +84,7 @@ def main(local_mode: bool=False):
                     authDomain=FIREBASE_AUTHDOMAIN,
                     databaseURL=FIREBASE_DATABASEURL,
                     storageBucket=FIREBASE_STORAGEBUCKET,
-                    serviceAccount=FIREBASE_SERVICE_ACOUNT,
+                    serviceAccount=FIREBASE_SERVICE_ACCOUNT,
                     gmail=FIREBASE_GMAIL,
                     password=FIREBASE_PASSWORD
                 )
