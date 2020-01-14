@@ -9,6 +9,7 @@ LOG = create_log()
 
 __all__ = ['VALID_METHOD_TYPES', 'CutoffMethods']
 
+
 class CutoffMethods:
 
     def __init__(self,
@@ -65,7 +66,6 @@ class CutoffMethods:
     #
     #     if path_to_save is not None:
     #         plt.savefig(path_to_save, bbox_inches = 'tight')
-
 
     @staticmethod
     def __percentile(data, p):

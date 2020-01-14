@@ -9,11 +9,11 @@ build
 *.egg-info
 dist
 
-./Voice
 
 docker-compose.dev.yml
+docker-compose.dev.ssl.yml
 config.sh
 sample_request.sh
 
-tmp_firebase_service_account.json
 ssl_files
+Dockerfile.ssl

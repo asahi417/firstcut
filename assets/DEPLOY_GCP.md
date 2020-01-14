@@ -37,11 +37,13 @@ $ gcloud docker -- push gcr.io/${GCP_PROJECT_ID}/nitro_editor_api
 
 Check if the images has been deployed from [console](https://console.cloud.google.com/gcr/images/nitro-test-project?project=nitro-test-project).
 
+## Run on Cloud Run
+Run a cloud run instance with the latest registered image (turn on http traffic) and
+change the [firewall setting](https://console.cloud.google.com/networking/firewalls/details/default-allow-http?project=nitro-test-project&applicableToInstancesTablesize=50),
+to enable port 8008. 
+
 ## Run on GCE
 Run an instance with the latest registered image (turn on http traffic) and
 change the [firewall setting](https://console.cloud.google.com/networking/firewalls/details/default-allow-http?project=nitro-test-project&applicableToInstancesTablesize=50),
 to enable port 8008. 
-
-## Push new image
-Each time, you need to re-run VM with the latest image and then update IP as it will be changed.
 

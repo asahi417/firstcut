@@ -34,14 +34,25 @@ $ sudo install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib /
 $ sudo install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib /usr/local/opt/openssl/lib/libssl.1.1.dylib $(which vapor)
 ```
 
-## Add to composer file
+## Add Dockerfile
 In [docker-composer](./docker-compose.yml), you have to add
 
 ```
 SSL_CERTIFICATETE_DIR: "ssl_files"
 ```
 
-as `args`.
+as `args`, and following lines to [Dockerfile](./Dockerfile)
+
+```
+ARG SSL_CERTIFICATETE_DIR
+
+COPY ${SSL_CERTIFICATETE_DIR}/ca.crt /tmp
+COPY ${SSL_CERTIFICATETE_DIR}/ca.key /tmp
+
+ENV SSL_CERTIFICATE=/tmp/ca.crt \
+    SSL_KEY=/tmp/ca.key
+
+```
 
 ## Reference
 - [issue free SSL from macOS](http://rikuga.me/2017/12/24/oreore-ca-and-ssl-cert/)

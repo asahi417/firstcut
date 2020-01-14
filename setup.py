@@ -17,7 +17,7 @@ setup(
     include_package_data=True,
     test_suite='test',
     install_requires=[
-        'scipy>=1.2.0',
+        'scipy>=1.2.0,<2.0.0',
         'toml>=0.10.0',
         'numpy',
         'cython',
