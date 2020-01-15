@@ -13,8 +13,8 @@ docker-compose -f docker-compose.yml up
 
 As default, it works as a local service,
 but the app can run with firebase backend as well, which requires
-[credentials for connecting to firebase storage](assets/FIREBASE.md),
-and [SSL certificate](./assets/SSL.md) to be included in [docker-composer](./docker-compose.yml) file.
+[credentials for connecting to firebase storage](assets/FIREBASE.md)
+to be included in [docker-composer](./docker-compose.yml) file.
 To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
 
 ## Service

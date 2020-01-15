@@ -1,4 +1,4 @@
-""" Video/Audio clipping API """
+""" Video/Audio clipping API, local version """
 
 import nitro_editor
 from threading import Thread
@@ -12,24 +12,24 @@ app = Flask(__name__)
 CORS(app)
 
 # CONFIG
-TMP_DIR = '/tmp'  # directory where audio/video files are temporarily stored
+# directory where audio/video files are temporarily stored
+TMP_DIR = os.path.join(os.path.expanduser("~"), 'nitro_editor_data', 'tmp_files')
 PORT = int(os.getenv("PORT", "8008"))
 MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.12"))
 CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.9"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
-FIREBASE_SERVICE_ACCOUNT = os.getenv('FIREBASE_SERVICE_ACCOUNT', None)
-FIREBASE_APIKEY = os.getenv('FIREBASE_APIKEY', None)
-FIREBASE_AUTHDOMAIN = os.getenv('FIREBASE_AUTHDOMAIN', None)
-FIREBASE_DATABASEURL = os.getenv('FIREBASE_DATABASEURL', None)
-FIREBASE_STORAGEBUCKET = os.getenv('FIREBASE_STORAGEBUCKET', None)
-FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
-FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
 MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 300))
 
 
 def main():
-    """ Main API server """
+    """ Main API server
+
+     Parameter
+    ---------------
+    local_mode: bool
+        local testing mode
+    """
     job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
     logger = nitro_editor.util.create_log()
 
@@ -62,16 +62,10 @@ def main():
             else:
                 logger.info(_msg)
 
-    # connect to firebaase
-    firebase = nitro_editor.util.FireBaseConnector(
-            apiKey=FIREBASE_APIKEY,
-            authDomain=FIREBASE_AUTHDOMAIN,
-            databaseURL=FIREBASE_DATABASEURL,
-            storageBucket=FIREBASE_STORAGEBUCKET,
-            serviceAccount=FIREBASE_SERVICE_ACCOUNT,
-            gmail=FIREBASE_GMAIL,
-            password=FIREBASE_PASSWORD
-        )
+    logging('local test mode: No firebase backend')
+
+    if not os.path.exists(TMP_DIR):
+        os.makedirs(TMP_DIR, exist_ok=True)
 
     def audio_clip_process(job_id,
                            file_name,
@@ -94,10 +88,8 @@ def main():
             logging('validate file_name', job_id, debug=True)
             basename = os.path.basename(file_name)
             name, raw_format = basename.split('.')
-            path_file = os.path.join(TMP_DIR, '%s_%s_raw.%s' % (name, job_id, raw_format))
-            if not os.path.exists(path_file):
-                logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
-                firebase.download(file_name=file_name, path=path_file)
+
+            path_file = file_name
 
             logging('start processing', job_id, debug=True)
             editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
@@ -108,16 +100,14 @@ def main():
             flg_processed = editor.amplitude_clipping(min_interval_sec=min_interval_sec, ratio=ratio)
 
             if not flg_processed:
-                url = firebase.get_url(file_name)
+                url = file_name
             else:
+                # logging('save tmp folder: %s' % tmp_storage, job_id, debug=True)
+                # path_save = os.path.join(tmp_storage, '%s_%s_processed.%s' % (name, job_id, editor.format))
                 logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True)
                 path_save = os.path.join(TMP_DIR, '%s_%s_processed.%s' % (name, job_id, editor.format))
                 editor.write(path_save)
-                logging('upload to firebase', job_id, debug=True)
-                url = firebase.upload(file_path=path_save)
-                to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
-                logging('clean local storage: %s' % to_clean, job_id, debug=True)
-                os.system('rm -rf %s' % to_clean)
+                url = path_save
 
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
@@ -194,26 +184,6 @@ def main():
     def job_ids():
         """ get list of job ids """
         return jsonify(job_ids=job_status_instance.get_job_ids)
-
-    @app.route("/drop_file_firebase", methods=["GET"])
-    def drop_file_firebase():
-        """ drop file in firebase """
-        if request.method != "GET":
-            return BadRequest("Only GET method is allowed.")
-
-        file_name = request.args.get("file_name")
-        try:
-            if file_name == 'all':
-                logging('remove all files on firebase')
-                removed = firebase.remove(None)
-            elif file_name == '':
-                return BadRequest('`job_id` is required.')
-            else:
-                logging('remove %s files on firebase' % str(file_name))
-                removed = firebase.remove(file_name)
-            return jsonify(removed_files=removed)
-        except Exception:
-            return InternalServerError(traceback.format_exc())
 
     app.run(host="0.0.0.0", port=PORT, debug=False)
 
