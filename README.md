@@ -11,10 +11,10 @@ cd nitro_editor
 docker-compose -f docker-compose.yml up
 ```
 
-As default, it works as a local service,
-but the app can run with firebase backend as well, which requires
+The app runs with firebase backend, and so requires
 [credentials for connecting to firebase storage](assets/FIREBASE.md)
 to be included in [docker-composer](./docker-compose.yml) file.
+
 To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
 
 ## Service
@@ -25,7 +25,7 @@ To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
-| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase (in local mode, absolute file path to local file) |
+| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
 | **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
  
