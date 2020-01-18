@@ -90,6 +90,7 @@ def load_audio(file_path):
 
     return wave_array_np_list, audio_format, frame_rate, sample_width, channels, video, video_format, convert_mov
 
+
 class AudioEditor:
     """ Audio based video editor """
 
@@ -188,6 +189,7 @@ class AudioEditor:
             keep_part_sec.append([i, self.length_sec])
 
         if len(keep_part_sec) > 0:
+            edit_flg = True
             __wave_array_np_list = []
             for wave in self.__wave_array_np_list:
                 audio_signal_masked = wave[audio_signal_mask]
@@ -203,7 +205,7 @@ class AudioEditor:
                 sub_videos = [self.__video.subclip(s, e) for s, e in keep_part_sec]
                 LOG.debug(' * %i sub videos' % len(sub_videos))
                 self.__video = editor.concatenate_videoclips(sub_videos)
-                edit_flg = True
+
         else:
             if self.__convert_mov:
                 edit_flg = True
