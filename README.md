@@ -26,8 +26,9 @@ To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
 | **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
-| **min_interval_sec**                      | **MIN_INTERVAL_SEC** | minimum interval of part to exclude (sec) |
-| **cutoff_ratio**                          | **CUTOFF_RATIO**     | cutoff ratio from 0 to 1 |
+| **min_interval_sec**                      | 0.12                 | minimum interval of part to exclude (sec) |
+| **cutoff_ratio**                          | 0.9                  | cutoff ratio from 0 to 1 |
+| **crossfade_sec**                         | 0.1                  | crossfade interval |
  
 - Return:
 
