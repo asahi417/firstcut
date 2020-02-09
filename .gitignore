@@ -9,7 +9,6 @@ build
 *.egg-info
 dist
 
-
 docker-compose.dev.yml
 docker-compose.dev.ssl.yml
 config.sh
@@ -17,3 +16,6 @@ sample_request.sh
 
 ssl_files
 Dockerfile.ssl
+
+sample_files/*_edit*
+random/unused

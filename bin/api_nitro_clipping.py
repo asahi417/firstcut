@@ -16,6 +16,7 @@ TMP_DIR = '/tmp'  # directory where audio/video files are temporarily stored
 PORT = int(os.getenv("PORT", "8008"))
 MIN_INTERVAL_SEC = float(os.getenv("MIN_INTERVAL_SEC", "0.12"))
 CUTOFF_RATIO = float(os.getenv("CUTOFF_RATIO", "0.9"))
+CROSSFADE_SEC = float(os.getenv("CROSSFADE_SEC", "0.1"))
 CUTOFF_METHOD = os.getenv("CUTOFF_METHOD", "percentile")
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
 FIREBASE_SERVICE_ACCOUNT = os.getenv('FIREBASE_SERVICE_ACCOUNT', None)
@@ -76,7 +77,8 @@ def main():
     def audio_clip_process(job_id,
                            file_name,
                            min_interval_sec,
-                           ratio):
+                           ratio,
+                           crossfade_sec):
         """ Audio clip process function
 
          Parameter
@@ -89,6 +91,7 @@ def main():
             minimum interval seconds
         ratio: float
             ratio to retrieve
+        crossfade_sec: float
         """
         try:
             logging('validate file_name', job_id, debug=True)
@@ -105,20 +108,19 @@ def main():
                 logging('Too long length: %i sec > %i sec' % (editor.length_sec, MAX_LENGTH_SEC), job_id, error=True)
                 return
 
-            flg_processed = editor.amplitude_clipping(min_interval_sec=min_interval_sec, ratio=ratio)
+            flg_processed = editor.amplitude_clipping(
+                min_interval_sec=min_interval_sec, ratio=ratio, crossfade_sec=crossfade_sec)
 
-            if not flg_processed:
-                url = firebase.get_url(file_name)
-            else:
+            if flg_processed or editor.is_mov:
                 logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True)
-                path_save = os.path.join(TMP_DIR, '%s_%s_processed.%s' % (name, job_id, editor.format))
-                editor.write(path_save)
+                path_save = editor.write(os.path.join(TMP_DIR, '%s_%s_processed' % (name, job_id)))
                 logging('upload to firebase', job_id, debug=True)
                 url = firebase.upload(file_path=path_save)
                 to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
                 logging('clean local storage: %s' % to_clean, job_id, debug=True)
                 os.system('rm -rf %s' % to_clean)
-
+            else:
+                url = firebase.get_url(file_name)
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
             return
@@ -149,24 +151,38 @@ def main():
             return BadRequest('file dose not have any identifiers: %s' % file_name)
         logging(' * parameter `file_name`: %s' % file_name)
 
+        # parameter
         min_interval_sec = post_body.get('min_interval_sec', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(min_interval_sec, MIN_INTERVAL_SEC, 0.0, 10000, is_float=True)
+        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+            min_interval_sec, MIN_INTERVAL_SEC, 0.0, 10000, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
         min_interval_sec = value_or_msg
         logging(' * parameter `min_interval_sec`: %s' % str(min_interval_sec))
 
+        # parameter
         cutoff_ratio = post_body.get('cutoff_ratio', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(cutoff_ratio, CUTOFF_RATIO, 0.0, 1.0, is_float=True)
+        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+            cutoff_ratio, CUTOFF_RATIO, 0.0, 1.0, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
         cutoff_ratio = value_or_msg
         logging(' * parameter `cutoff_ratio`: %s' % str(cutoff_ratio))
 
+        # parameter
+        crossfade_sec = post_body.get('crossfade_sec', '')
+        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+            crossfade_sec, CROSSFADE_SEC, 0.0, 10000, is_float=True)
+        if not valid_flg:
+            return BadRequest(value_or_msg)
+        crossfade_sec = value_or_msg
+        logging(' * parameter `crossfade_sec`: %s' % str(crossfade_sec))
+
         # run process
         job_id = job_status_instance.register_job()
         logging(' - job_id: %s' % job_id)
-        thread = Thread(target=audio_clip_process, args=[job_id, file_name, min_interval_sec, cutoff_ratio])
+        thread = Thread(target=audio_clip_process,
+                        args=[job_id, file_name, min_interval_sec, cutoff_ratio, crossfade_sec])
         thread.start()
         return jsonify(job_id=job_id)
 

@@ -7,6 +7,7 @@ VALID_METHOD_TYPES = ['bandpass']
 
 __all__ = ['NoiseReduction']
 
+
 class NoiseReduction:
 
     def __init__(self,

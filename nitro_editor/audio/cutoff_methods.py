@@ -28,7 +28,18 @@ class CutoffMethods:
         else:
             raise ValueError('unknown `method_type`: %s not in %s' % (self.__method_type, VALID_METHOD_TYPES))
 
-    # def visualize_cutoff_threshold(self,
+    @staticmethod
+    def __percentile(data, p):
+        """ percentile method """
+        p = np.clip(p, 0.0, 1.0)
+        single_array_sorted = np.sort(np.abs(data))
+        ind = int(np.floor(p * len(data)))
+        val = single_array_sorted[min(ind, len(data) - 1)]
+        LOG.debug('cutoff threshold (percentile method)')
+        LOG.debug(' * percentile: %0.2f with %0.3f percentile' % (val, p))
+        return int(val)
+
+                # def visualize_cutoff_threshold(self,
     #                                wave_data,
     #                                frame_rate,
     #                                ratio: float = None,
@@ -66,14 +77,3 @@ class CutoffMethods:
     #
     #     if path_to_save is not None:
     #         plt.savefig(path_to_save, bbox_inches = 'tight')
-
-    @staticmethod
-    def __percentile(data, p):
-        """ percentile method """
-        p = np.clip(p, 0.0, 1.0)
-        single_array_sorted = np.sort(np.abs(data))
-        ind = int(np.floor(p * len(data)))
-        val = single_array_sorted[min(ind, len(data) - 1)]
-        LOG.debug('cutoff threshold (percentile method)')
-        LOG.debug(' * percentile: %0.2f with %0.3f percentile' % (val, p))
-        return int(val)
