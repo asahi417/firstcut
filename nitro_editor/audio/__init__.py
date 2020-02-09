@@ -1,6 +1,5 @@
-from .editor import AudioEditor, load_audio
+from .editor import AudioEditor
 
 __all__ = (
-    'AudioEditor',
-    'load_audio'
+    'AudioEditor'
 )
