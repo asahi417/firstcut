@@ -37,7 +37,8 @@ def main():
     def logging(_msg,
                 _job_id: str = None,
                 debug: bool = False,
-                error: bool = False):
+                error: bool = False,
+                progress: float = None):
         """ Logger (as default INFO)
 
          Parameter
@@ -57,7 +58,7 @@ def main():
             logger.error('job_id `%s` raises InternalServerError\n %s' % (_job_id, _msg))
         else:
             if _job_id is not None:
-                job_status_instance.update(job_id=_job_id, status=_msg)
+                job_status_instance.update(job_id=_job_id, status=_msg, progress=progress)
             if debug:
                 logger.debug(_msg)
             else:
@@ -94,7 +95,7 @@ def main():
         crossfade_sec: float
         """
         try:
-            logging('validate file_name', job_id, debug=True)
+            logging('validate file_name', job_id, debug=True, progress=0)
             basename = os.path.basename(file_name)
             name, raw_format = basename.split('.')
             path_file = os.path.join(TMP_DIR, '%s_%s_raw.%s' % (name, job_id, raw_format))
@@ -102,7 +103,7 @@ def main():
                 logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
                 firebase.download(file_name=file_name, path=path_file)
 
-            logging('start processing', job_id, debug=True)
+            logging('start processing', job_id, debug=True, progress=20)
             editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
             if editor.length_sec > MAX_LENGTH_SEC:
                 logging('Too long length: %i sec > %i sec' % (editor.length_sec, MAX_LENGTH_SEC), job_id, error=True)
@@ -112,12 +113,12 @@ def main():
                 min_interval_sec=min_interval_sec, ratio=ratio, crossfade_sec=crossfade_sec)
 
             if flg_processed or editor.is_mov:
-                logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True)
+                logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True, progress=70)
                 path_save = editor.write(os.path.join(TMP_DIR, '%s_%s_processed' % (name, job_id)))
-                logging('upload to firebase', job_id, debug=True)
+                logging('upload to firebase', job_id, debug=True, progress=75)
                 url = firebase.upload(file_path=path_save)
                 to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
-                logging('clean local storage: %s' % to_clean, job_id, debug=True)
+                logging('clean local storage: %s' % to_clean, job_id, debug=True, progress=95)
                 os.system('rm -rf %s' % to_clean)
             else:
                 url = firebase.get_url(file_name)
