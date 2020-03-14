@@ -65,21 +65,27 @@ def main():
                 logger.info(_msg)
 
     # connect to firebaase
-    firebase = nitro_editor.util.FireBaseConnector(
-            apiKey=FIREBASE_APIKEY,
-            authDomain=FIREBASE_AUTHDOMAIN,
-            databaseURL=FIREBASE_DATABASEURL,
-            storageBucket=FIREBASE_STORAGEBUCKET,
-            serviceAccount=FIREBASE_SERVICE_ACCOUNT,
-            gmail=FIREBASE_GMAIL,
-            password=FIREBASE_PASSWORD
-        )
+    try:
+        firebase = nitro_editor.util.FireBaseConnector(
+                apiKey=FIREBASE_APIKEY,
+                authDomain=FIREBASE_AUTHDOMAIN,
+                databaseURL=FIREBASE_DATABASEURL,
+                storageBucket=FIREBASE_STORAGEBUCKET,
+                serviceAccount=FIREBASE_SERVICE_ACCOUNT,
+                gmail=FIREBASE_GMAIL,
+                password=FIREBASE_PASSWORD
+            )
+    except Exception:
+        logger.debug(traceback.format_exc())
+        logger.debug('API will run local mode')
+        firebase = None
 
     def audio_clip_process(job_id,
                            file_name,
                            min_interval_sec,
                            ratio,
-                           crossfade_sec):
+                           crossfade_sec,
+                           run_local=False):
         """ Audio clip process function
 
          Parameter
@@ -98,10 +104,16 @@ def main():
             logging('validate file_name', job_id, debug=True, progress=0)
             basename = os.path.basename(file_name)
             name, raw_format = basename.split('.')
-            path_file = os.path.join(TMP_DIR, '%s_%s_raw.%s' % (name, job_id, raw_format))
-            if not os.path.exists(path_file):
-                logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
-                firebase.download(file_name=file_name, path=path_file)
+            if run_local:
+                # referring local file
+                if not os.path.exists(file_name):
+                    raise ValueError('file not found: %s' % file_name)
+                path_file = file_name
+            else:
+                path_file = os.path.join(TMP_DIR, '%s_%s_raw.%s' % (name, job_id, raw_format))
+                if not os.path.exists(path_file):
+                    logging('download %s from firebase to %s' % (file_name, path_file), job_id, debug=True)
+                    firebase.download(file_name=file_name, path=path_file)
 
             logging('start processing', job_id, debug=True, progress=20)
             editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
@@ -115,13 +127,19 @@ def main():
             if flg_processed or editor.is_mov:
                 logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True, progress=70)
                 path_save = editor.write(os.path.join(TMP_DIR, '%s_%s_processed' % (name, job_id)))
-                logging('upload to firebase', job_id, debug=True, progress=75)
-                url = firebase.upload(file_path=path_save)
-                to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
-                logging('clean local storage: %s' % to_clean, job_id, debug=True, progress=95)
-                os.system('rm -rf %s' % to_clean)
+                if run_local:
+                    url = path_save
+                else:
+                    logging('upload to firebase', job_id, debug=True, progress=75)
+                    url = firebase.upload(file_path=path_save)
+                    to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
+                    logging('clean local storage: %s' % to_clean, job_id, debug=True, progress=95)
+                    os.system('rm -rf %s' % to_clean)
             else:
-                url = firebase.get_url(file_name)
+                if run_local:
+                    url = file_name
+                else:
+                    url = firebase.get_url(file_name)
             # update job status
             job_status_instance.complete(job_id=job_id, url=url)
             return
@@ -179,11 +197,14 @@ def main():
         crossfade_sec = value_or_msg
         logging(' * parameter `crossfade_sec`: %s' % str(crossfade_sec))
 
+        # run local
+        run_local = firebase is None
+
         # run process
         job_id = job_status_instance.register_job()
         logging(' - job_id: %s' % job_id)
         thread = Thread(target=audio_clip_process,
-                        args=[job_id, file_name, min_interval_sec, cutoff_ratio, crossfade_sec])
+                        args=[job_id, file_name, min_interval_sec, cutoff_ratio, crossfade_sec, run_local])
         thread.start()
         return jsonify(job_id=job_id)
 
