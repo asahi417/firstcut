@@ -26,7 +26,7 @@ FIREBASE_DATABASEURL = os.getenv('FIREBASE_DATABASEURL', None)
 FIREBASE_STORAGEBUCKET = os.getenv('FIREBASE_STORAGEBUCKET', None)
 FIREBASE_GMAIL = os.getenv('FIREBASE_GMAIL', None)
 FIREBASE_PASSWORD = os.getenv('FIREBASE_PASSWORD', None)
-MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 300))
+MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 1200))
 
 
 def main():
@@ -102,8 +102,9 @@ def main():
         """
         try:
             logging('validate file_name', job_id, debug=True, progress=0)
-            basename = os.path.basename(file_name)
-            name, raw_format = basename.split('.')
+            basename = os.path.basename(file_name).split('.')
+            raw_format = basename[-1]
+            name = '.'.join(basename[:-1])
             if run_local:
                 # referring local file
                 if not os.path.exists(file_name):

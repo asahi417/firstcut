@@ -57,7 +57,7 @@ class Status:
         self.__update_message(job_id, 'completed', '0', url=url, refresh=True, progress=100)
 
     def error(self, job_id, error_message):
-        self.__update_message(job_id, error_message, '-1', refresh=True)
+        self.__update_message(job_id, error_message, '-1', refresh=True, progress=100)
 
     def __update_message(self, job_id, status, status_id, url='', refresh=True, progress: float = None):
         if job_id not in self.__id_status_dict.keys():
