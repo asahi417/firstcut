@@ -196,6 +196,14 @@ class AudioEditor:
     #         path_to_save=path_to_save
     #     )
 
+    @property
+    def file_identifier(self):
+        """ file identifier """
+        if self.video is not None:
+            return self.__video_format
+        else:
+            return self.__audio_format
+
     def write(self, _file_prefix: str):
         """ Write audio to file (format should be same as the input audio file)
 
@@ -273,11 +281,11 @@ class AudioEditor:
                 # mov format needs to be converted to mp4 firstly
                 LOG.debug('convert MOV to mp4')
                 file_path, _ = mov_to_mp4(file_path)
+                convert_mov = True
             audio_format = 'mp3'
             video_format = 'mp4'
             audio = AudioSegment.from_file(file_path)
             video = editor.VideoFileClip(file_path)
-            convert_mov = True
         else:
             raise ValueError('unknown format %s (valid format: %s)' % (file_path, VALID_FORMAT))
 

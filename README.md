@@ -55,6 +55,7 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | **status_code**     | `{'1': job in progress, '-1': error, '0': job_completed}` |
 | **elapsed_time**    | elapsed time after starting process |
 | **url**             | url for processed file (provided only the job has been completed) |
+| **file_name**       | processed file name |
 
 
 ### `job_ids`

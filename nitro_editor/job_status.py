@@ -53,13 +53,14 @@ class Status:
     def update(self, job_id, status, refresh=True, progress: float = None):
         self.__update_message(job_id, status, '1', refresh=refresh, progress=progress)
 
-    def complete(self, job_id, url):
-        self.__update_message(job_id, 'completed', '0', url=url, refresh=True, progress=100)
+    def complete(self, job_id, **kwargs):
+        self.__update_message(job_id, 'completed', '0', refresh=True, progress=100, **kwargs)
 
     def error(self, job_id, error_message):
         self.__update_message(job_id, error_message, '-1', refresh=True, progress=100)
 
-    def __update_message(self, job_id, status, status_id, url='', refresh=True, progress: float = None):
+    def __update_message(self,
+                         job_id, status, status_id, refresh=True, progress: float = None, **kwargs):
         if job_id not in self.__id_status_dict.keys():
             raise ValueError('job_id is not registered to status dictionary:  %s' % job_id)
         if refresh:
@@ -69,7 +70,8 @@ class Status:
             self.__id_status_dict[job_id]['status'] += status
             self.__id_status_dict[job_id]['status_code'] += status_id
         self.__id_status_dict[job_id]['elapsed_time'] = time() - self.__id_status_dict[job_id]['unix_timestamp']
-        self.__id_status_dict[job_id]['url'] = url
+        for k, v in kwargs.items():
+            self.__id_status_dict[job_id][k] = v
         if progress is not None:
             self.__id_status_dict[job_id]['progress'] = progress
 

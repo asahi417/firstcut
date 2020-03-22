@@ -127,22 +127,24 @@ def main():
 
             if flg_processed or editor.is_mov:
                 logging('save tmp folder: %s' % TMP_DIR, job_id, debug=True, progress=70)
-                path_save = editor.write(os.path.join(TMP_DIR, '%s_%s_processed' % (name, job_id)))
+                base_name = '%s_%s_processed' % (name, job_id)
                 if run_local:
-                    url = path_save
+                    file_name = editor.write(os.path.join(TMP_DIR, base_name))
+                    url = ''
                 else:
                     logging('upload to firebase', job_id, debug=True, progress=75)
-                    url = firebase.upload(file_path=path_save)
+                    file_name = base_name + '.' + editor.file_identifier
+                    url = firebase.upload(file_path=editor.write(os.path.join(TMP_DIR, base_name)))
                     to_clean = os.path.join(TMP_DIR, '%s_%s_*' % (name, job_id))
                     logging('clean local storage: %s' % to_clean, job_id, debug=True, progress=95)
                     os.system('rm -rf %s' % to_clean)
             else:
                 if run_local:
-                    url = file_name
+                    url = ''
                 else:
                     url = firebase.get_url(file_name)
             # update job status
-            job_status_instance.complete(job_id=job_id, url=url)
+            job_status_instance.complete(job_id=job_id, url=url, file_name=file_name)
             return
 
         except Exception:
