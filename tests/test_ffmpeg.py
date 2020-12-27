@@ -1,7 +1,6 @@
 """ UnitTest """
 import unittest
 import logging
-import shutil
 import os
 
 from firstcut import ffmpeg
@@ -20,7 +19,7 @@ class TestFFMPEG(unittest.TestCase):
     def test(self):
         """ convert mov to mp4 """
         audio_stats, video_stats = ffmpeg.load_file(sample_mov)
-        (audio, wave_array_np_list, audio_format, audio.frame_rate, audio.sample_width, audio.channels) = audio_stats
+        (audio, wave_array_np_list, audio_format, frame_rate, sample_width, channels) = audio_stats
         (video, video_format, convert_mov) = video_stats
         assert convert_mov
         export_file = ffmpeg.write_file(export_file_prefix='./sample_data/vc_5_test',

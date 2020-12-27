@@ -1,6 +1,7 @@
 # FirstCut
-Audio/movie clipping service by detecting silent interval automatically and eliminated them from
-the original file. We provide option to use Firebase as backend web data I/O.  
+Audio/video editor: detecting silent interval and eliminated them from the original file to compress the audio/video.
+- python interface
+- API service    
 
 ## Get started with Docker
 Clone the repo and build docker composer file (see [here](./assets/RUN_WITHOUT_DOCKER.md) for running without docker).

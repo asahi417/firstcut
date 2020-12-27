@@ -197,13 +197,12 @@ def write_file(export_file_prefix: str,
             os.makedirs(os.path.dirname(__path), exist_ok=True)
 
     audio_file = '{}.{}'.format(export_file_prefix, audio_format)
-    print(audio_file)
     validate_path(audio_file)
 
     logging.info('save audio to {}'.format(audio_file))
     audio.export(audio_file, format=audio_format)
 
-    if video:
+    if video is not None:
         assert video_format, 'video_format need to be specified'
 
         video_file_mute = '{}_no_audio.{}'.format(export_file_prefix, video_format)

@@ -1,6 +1,5 @@
 """ Video/Audio clipping API """
-
-import nitro_editor
+import firstcut
 from threading import Thread
 import traceback
 import os
@@ -31,8 +30,8 @@ MAX_LENGTH_SEC = int(os.getenv('MAX_LENGTH_SEC', 1200))
 
 def main():
     """ Main API server """
-    job_status_instance = nitro_editor.job_status.Status(keep_log_second=KEEP_LOG_SEC)
-    logger = nitro_editor.util.create_log()
+    job_status_instance = firstcut.job_status.Status(keep_log_second=KEEP_LOG_SEC)
+    logger = firstcut.util.create_log()
 
     def logging(_msg,
                 _job_id: str = None,
@@ -66,7 +65,7 @@ def main():
 
     # connect to firebaase
     try:
-        firebase = nitro_editor.util.FireBaseConnector(
+        firebase = firstcut.util.FireBaseConnector(
                 apiKey=FIREBASE_APIKEY,
                 authDomain=FIREBASE_AUTHDOMAIN,
                 databaseURL=FIREBASE_DATABASEURL,
@@ -117,7 +116,7 @@ def main():
                     firebase.download(file_name=file_name, path=path_file)
 
             logging('start processing', job_id, debug=True, progress=20)
-            editor = nitro_editor.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
+            editor = firstcut.audio.AudioEditor(path_file, cutoff_method=CUTOFF_METHOD)
             if editor.length_sec > MAX_LENGTH_SEC:
                 logging('Too long length: %i sec > %i sec' % (editor.length_sec, MAX_LENGTH_SEC), job_id, error=True)
                 return
@@ -175,7 +174,7 @@ def main():
 
         # parameter
         min_interval_sec = post_body.get('min_interval_sec', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+        valid_flg, value_or_msg = firstcut.util.validate_numeric(
             min_interval_sec, MIN_INTERVAL_SEC, 0.0, 10000, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
@@ -184,7 +183,7 @@ def main():
 
         # parameter
         cutoff_ratio = post_body.get('cutoff_ratio', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+        valid_flg, value_or_msg = firstcut.util.validate_numeric(
             cutoff_ratio, CUTOFF_RATIO, 0.0, 1.0, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
@@ -193,7 +192,7 @@ def main():
 
         # parameter
         crossfade_sec = post_body.get('crossfade_sec', '')
-        valid_flg, value_or_msg = nitro_editor.util.validate_numeric(
+        valid_flg, value_or_msg = firstcut.util.validate_numeric(
             crossfade_sec, CROSSFADE_SEC, 0.0, 10000, is_float=True)
         if not valid_flg:
             return BadRequest(value_or_msg)
