@@ -9,13 +9,11 @@ build
 *.egg-info
 dist
 
+sample_data/voxceleb1_test
+sample_data_private
 docker-compose.dev.yml
-docker-compose.dev.ssl.yml
 config.sh
 sample_request.sh
-
-ssl_files
-Dockerfile.ssl
 
 sample_files/*_edit*
 random/unused

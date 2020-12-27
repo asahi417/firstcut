@@ -6,10 +6,10 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(
-    name='nitro_editor',
+    name='firstcut',
     version=FULL_VERSION,
-    description='Library to edit audio file.',
-    url='https://github.com/asahi417',
+    description='FirstCut: automatic audio/movie editor',
+    url='https://github.com/asahi417/firstcut',
     long_description=readme,
     author='Asahi Ushio',
     author_email='asahi1992ushio@gmail.com',

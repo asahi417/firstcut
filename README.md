@@ -1,13 +1,13 @@
-# Nitro-editor
-Audio/video clipping service by detecting silent interval automatically and eliminated them from
+# FirstCut
+Audio/movie clipping service by detecting silent interval automatically and eliminated them from
 the original file. We provide option to use Firebase as backend web data I/O.  
 
 ## Get started with Docker
 Clone the repo and build docker composer file (see [here](./assets/RUN_WITHOUT_DOCKER.md) for running without docker).
 
 ```
-git clone https://github.com/asahi417/nitro_editor
-cd nitro_editor
+git clone https://github.com/asahi417/firstcut
+cd firstcut
 docker-compose -f docker-compose.yml up
 ```
 
