@@ -1,18 +1,17 @@
 # Firebase setup
-Brief introduction to set up firebase.
+Brief introduction to set up firebase (validated at the moment of 12/28/2020).
 
 ## Basic procedure
 ### Create project & bucket
-You may first create a project at [firebase](https://console.firebase.google.com) and a storage bucket for the project.
+You may first create a project at [firebase](https://console.firebase.google.com) and create a storage bucket at **Build > Storage**.
 
 ### Get credentials
-Go to project page (`https://console.firebase.google.com/project/{project name}/overview`)
-1. Go to **Develop > Authentication** and add `user_gmail` and `user_password`.
-2. Enable **Sign-in method** of **Email/Password**
-3. Go to **Project Overview > Settings** and get `apiKey`, `authDomain`, `databaseURL`, and `storageBucket`.
-4. Go to **Project Overview > Settings > Project Settings > Service Accounts > Generate New Private Key** to
- generate service account credential file.
- The file name (a json file) is supposed to set as `serviceAccountCredentials` and the content is used as `FIREBASE_SERVICE_ACOUNT` in the [docker-composer](./docker-compose.yml).
+Go to project overview page (`https://console.firebase.google.com/project/{project name}/overview`)
+1. Go to **Build > Authentication > Users** and add `user_gmail` and `user_password`.
+2. Go to **Build > Authentication > Sign-in method** and enable **Email/Password** sign-in.
+3. At **Project Overview**, add new app by clicking **</>** and get `apiKey`, `authDomain`, `databaseURL`, and `storageBucket`, which are shown while adding new app.
+4. Go to **Project Overview > Project Settings > Service Accounts** and click **Generate New Private Key** to generate service account credential file.
+ The file name (a json file) is `serviceAccountCredentials` and the content is used as `FIREBASE_SERVICE_ACOUNT` in the [docker-composer](./docker-compose.yml).
  See the procedure more in detail [here](https://stackoverflow.com/questions/41082171/firebase-permission-denied-with-pyrebase-library/41253388#41253388).  
 
 ### Edit docker-compose
