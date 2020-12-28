@@ -3,8 +3,7 @@ Brief introduction to set up firebase.
 
 ## Basic procedure
 ### Create project & bucket
-If you don't have any projects for nitro-editor, create a project of [firebase](https://console.firebase.google.com) and
-a storage bucket for the project.
+You may first create a project at [firebase](https://console.firebase.google.com) and a storage bucket for the project.
 
 ### Get credentials
 Go to project page (`https://console.firebase.google.com/project/{project name}/overview`)
