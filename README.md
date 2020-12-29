@@ -4,13 +4,16 @@ Audio/video editor: detecting silent interval and eliminated them from the origi
 - API service
 
 ## Get started
+### Commandline
+- Mac OS
 ```shell script
 git clone https://github.com/asahi417/firstcut
 cd firstcut
 ```
+- Linux
 
-### Docker
-Build docker composer.
+## API Service
+- ***Build with docker composer***
 
 ```shell script
 docker-compose -f docker-compose.yml up
@@ -19,12 +22,23 @@ docker-compose -f docker-compose.yml up
 The app runs with firebase backend, so requires [firebase credentials](FIREBASE.md).
 To deploy the image to gcp project, see [here](DEPLOY_GCP.md).
 
-### Commandline
-
+- ***Commandline***
+On mac OS, 
 ```shell script
+brew install llvm@9
+brew install ffmpeg
 pip install .
 python api.py
 ```
+while Linux, 
+
+```shell script
+apt-get install llvm@9
+apt-get install ffmpeg
+pip install .
+python api.py
+``` 
+
 Configuration can be changed via environment variables. 
 
 | Environment variable name  | Default | Description                                                                                         |
@@ -39,7 +53,7 @@ Configuration can be changed via environment variables.
 | **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
 | **FIREBASE_PASSWORD**      |         | password for the Gmail account |
 
-## Service
+
 ### `audio_clip`
 - Description: POST API to clip audio/video.
 - Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`

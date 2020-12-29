@@ -11,6 +11,7 @@ dist
 
 sample_data/voxceleb1_test
 sample_data/vc_5.mp4
+sample_data/*nmf*
 tests/test_output/*.mp4
 tests/test_output/*.mp3
 tests/test_output/*.wav

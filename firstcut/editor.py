@@ -34,6 +34,7 @@ class Editor:
             = audio_stats
         self.video, self.__video_format, self.is_mov = video_stats
         self.length = len(self.wave_array_np_list[0])
+        self.wave_array_np_list_float = [w / pow(2, 15) for w in self.wave_array_np_list]
 
         self.length_sec = len(self.audio) / 1000  # self.length / self.frame_rate
         self.format = self.__audio_format if self.video is None else self.__video_format
