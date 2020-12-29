@@ -16,8 +16,8 @@ Build docker composer.
 docker-compose -f docker-compose.yml up
 ```
 
-The app runs with firebase backend, so requires [firebase credentials](./assets/FIREBASE.md).
-To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
+The app runs with firebase backend, so requires [firebase credentials](FIREBASE.md).
+To deploy the image to gcp project, see [here](DEPLOY_GCP.md).
 
 ### Commandline
 
