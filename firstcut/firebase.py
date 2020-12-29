@@ -1,24 +1,17 @@
 import json
 import os
 import logging
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import pyrebase
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 __all__ = 'FireBaseConnector'
 
 
 class FireBaseConnector:
     """ Python client to connect to Fire Base Storage """
 
-    def __init__(self,
-                 apiKey,
-                 authDomain,
-                 databaseURL,
-                 storageBucket,
-                 gmail,
-                 password,
-                 serviceAccount):
+    def __init__(self, apiKey, authDomain, databaseURL, storageBucket, gmail, password, serviceAccount):
         """ Python client to connect to Fire Base Storage
 
          Parameter

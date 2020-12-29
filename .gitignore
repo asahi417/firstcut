@@ -15,7 +15,10 @@ tests/test_output/*.mp4
 tests/test_output/*.mp3
 tests/test_output/*.wav
 
-sample_data_private
 docker-compose.dev.yml
+tmp_firebase_service_account.json
+tmp
 
+sample_data_private
 random/unused
+

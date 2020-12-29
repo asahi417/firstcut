@@ -2,7 +2,6 @@
 import logging
 from itertools import groupby
 from tqdm import tqdm
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import numpy as np
 from moviepy import editor
@@ -10,6 +9,7 @@ from moviepy import editor
 from .cutoff_amplitude import get_cutoff_amplitude
 from .ffmpeg import write_file, load_file
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 __all__ = 'Editor'
 
 
@@ -19,9 +19,7 @@ class Editor:
     - (ii) process separately
     - (iii) combine `pydub.AudioSegment` for audio interface, and `moviepy.editor` for movie interface """
 
-    def __init__(self,
-                 file_path: str,
-                 max_sample_length: int = None):
+    def __init__(self, file_path: str, max_sample_length: int = None):
         """ Core audio/video editor
 
          Parameter
@@ -134,11 +132,16 @@ class Editor:
 
         assert audio is not None
         logging.info('complete editing: {} sec -> {} sec'.format(self.length_sec, len(audio)/1000))
-        self.audio_edit = audio
-        if self.video is not None:
-            assert video
-            logging.info('process video: * {} sub videos'.format(len(video)))
-            self.video_edit = editor.concatenate_videoclips(video)
+        if self.length_sec != len(audio)/1000:
+            self.audio_edit = audio
+            if self.video is not None:
+                assert video
+                logging.info('process video: * {} sub videos'.format(len(video)))
+                self.video_edit = editor.concatenate_videoclips(video)
+
+    @property
+    def is_edited(self):
+        return True if self.audio_edit is not None else False
 
     @property
     def file_identifier(self):

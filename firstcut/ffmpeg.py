@@ -2,12 +2,12 @@
 import os
 import subprocess
 import logging
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 import numpy as np
 from pydub import AudioSegment
 from moviepy import editor
 
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 __all__ = ('combine_audio_video', 'mov_to_mp4', 'load_file', 'write_file')
 

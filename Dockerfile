@@ -41,4 +41,4 @@ ENV LC_ALL=C.UTF-8 \
 RUN pip3 install pip==19.1.1
 RUN pip3 install --no-cache-dir .
 
-CMD ["python", "bin/api_nitro_clipping.py"]
+CMD ["python", "api.py"]

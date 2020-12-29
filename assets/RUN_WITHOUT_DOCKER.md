@@ -7,9 +7,7 @@ Environment variables:
 | Environment variable name  | Default | Description                                                                                         |
 | -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | **PORT**                   | `8008`  | port to host the server on                                                                          |
-| **MIN_INTERVAL_SEC**       | `0.2`   | minimum interval of part to exclude (sec) |
-| **MIN_AMPLITUDE**          | `0.1`   | minimum amplitude |
-| **TMP_DIR**                | `~`     | directory where the files to be saved |
+| **TMP_DIR**                | `./tmp` | directory where the files to be saved |
 | **FIREBASE_SERVICE_ACOUNT**|         | service credential |
 | **FIREBASE_APIKEY**        |         | apiKey |
 | **FIREBASE_AUTHDOMAIN**    |         | authDomain |
@@ -17,8 +15,6 @@ Environment variables:
 | **FIREBASE_STORAGEBUCKET** |         | storageBucket |
 | **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
 | **FIREBASE_PASSWORD**      |         | password for the Gmail account |
-| **SSL_CERTIFICATE**        |         | path to SSL certificate |
-| **SSL_KEY**                |         | path to SSL key |
 
 2. ***install ffmpeg***  
 On Mac
@@ -32,6 +28,8 @@ sudo apt install ffmpeg
 
 3. ***install & run API server***    
 ```
+git clone https://github.com/asahi417/firstcut
+cd firstcut
 pip install -e .
-python ./bin/api_nitro_clipping.py
+python ./api.py
 ```

@@ -1,15 +1,10 @@
 """ API job monitoring/numeric check module """
-
 import string
 import random
 from time import time
 
 
-def validate_numeric(value: str,
-                     default,
-                     min_val,
-                     max_val,
-                     is_float=False):
+def validate_numeric(value, min_val, max_val, is_float=False):
     """ Validate numeric variable (for API parameter validation)
 
      Parameter
@@ -27,31 +22,21 @@ def validate_numeric(value: str,
 
      Return
     ---------------
-    flag: bool
-        error flag True if there's any error
     value:
-        value for the parameter
+    error_message:
     """
-    if value == '' or value is None:
-        value = default
+    # value = default if value == '' or value is None else value
+    assert type(value) in [str, int, float], 'value should be either str/int/float'
+    assert type(min_val) in [int, float] and type(max_val) in [int, float], 'min_val/max_val should be numeric'
     try:
-        if is_float:
-            value = float(value)
-        else:
-            value = int(value)
+        value = float(value) if is_float else int(value)
     except ValueError:
-        return False, f'Param must be a numeric value between "{min_val}" and "{max_val}"'
-
-    if type(max_val) is not float and type(max_val) is not int:
-        return False, 'max_val is not numeric: %s' % str(max_val)
-
-    if type(min_val) is not float and type(min_val) is not int:
-        return False, 'min_val is not numeric: %s' % str(min_val)
+        return None, 'wrong type'.format(value)
 
     if value > max_val or value < min_val:
-        return False, f'Param must be between {min_val} and {max_val} but {value}'
+        return None, 'value {} is out of range {} < {}'.format(value, min_val, max_val)
 
-    return True, value
+    return value, ''
 
 
 class Status:
@@ -72,7 +57,7 @@ class Status:
     def random_string(string_length: int = 10):
         """ Generate a random string of fixed length """
         letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(string_length))
+        return ''.join(random.choice(letters) for _ in range(string_length))
 
     @property
     def get_job_ids(self):

@@ -1,26 +1,47 @@
 # FirstCut
-Audio/video editor: detecting silent interval and eliminated them from the original file to compress the audio/video.
+Audio/video editor: detecting silent interval and eliminated them from the original audio/video.
 - python interface
-- API service    
+- API service
 
-## Get started with Docker
-Clone the repo and build docker composer file (see [here](./assets/RUN_WITHOUT_DOCKER.md) for running without docker).
-
-```
+## Get started
+```shell script
 git clone https://github.com/asahi417/firstcut
 cd firstcut
+```
+
+### Docker
+Build docker composer.
+
+```shell script
 docker-compose -f docker-compose.yml up
 ```
 
-The app runs with firebase backend, and so requires
-[credentials for connecting to firebase storage](assets/FIREBASE.md)
-to be included in [docker-composer](./docker-compose.yml) file.
-
+The app runs with firebase backend, so requires [firebase credentials](./assets/FIREBASE.md).
 To deploy the image to gcp project, see [here](assets/DEPLOY_GCP.md).
+
+### Commandline
+
+```shell script
+pip install .
+python api.py
+```
+Configuration can be changed via environment variables. 
+
+| Environment variable name  | Default | Description                                                                                         |
+| -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| **PORT**                   | `8008`  | port to host the server on                                                                          |
+| **TMP_DIR**                | `./tmp` | directory where the files to be saved |
+| **FIREBASE_SERVICE_ACOUNT**|         | service credential |
+| **FIREBASE_APIKEY**        |         | apiKey |
+| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
+| **FIREBASE_DATABASEURL**   |         | databaseURL |
+| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
+| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
+| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
 
 ## Service
 ### `audio_clip`
-- Description: POST API to truncate wav audio file.
+- Description: POST API to clip audio/video.
 - Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`
 - Parameters:
 
