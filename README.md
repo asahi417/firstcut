@@ -111,3 +111,14 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | return name         | Description           |
 | ------------------- | --------------------- |
 | **removed_files**   | list of removed files |
+
+
+## Python interface
+It works as an python library as well where one can simply apply filtering and editing for a audio/video file.  
+
+```python
+import firstcut
+file_path = './sample_data/vc_1.mp3'
+editor = firstcut.Editor(file_path)
+editor.amplitude_clipping(min_interval_sec=0.5, cutoff_ratio=0.9)
+```
