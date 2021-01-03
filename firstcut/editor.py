@@ -6,8 +6,10 @@ from tqdm import tqdm
 import numpy as np
 from moviepy import editor
 
+from .nmf import nmf_filter
 from .cutoff_amplitude import get_cutoff_amplitude
-from .ffmpeg import write_file, load_file
+from .util import write_file, load_file, write_file_wav
+from .visualization import visualize_noise_reduction, visualize_cutoff_amplitude
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 __all__ = 'Editor'
@@ -34,7 +36,6 @@ class Editor:
             = audio_stats
         self.video, self.__video_format, self.is_mov = video_stats
         self.length = len(self.wave_array_np_list[0])
-        self.wave_array_np_list_float = [w / pow(2, 15) for w in self.wave_array_np_list]
 
         self.length_sec = len(self.audio) / 1000  # self.length / self.frame_rate
         self.format = self.__audio_format if self.video is None else self.__video_format
@@ -53,13 +54,67 @@ class Editor:
         if max_sample_length is not None and self.length > max_sample_length:
             raise ValueError('sample data exceeds max sample size: {} > {}'.format(self.length, max_sample_length))
 
+        self.wave_array_np_list_raw = self.wave_array_np_list.copy()
         self.audio_edit = None
         self.video_edit = None
+        self.cutoff_ratio = None
+        self.if_noise_reduction = False
+        self.if_amplitude_clipping = False
+
+    def noise_reduction(self,
+                        method: str = 'nmf',
+                        all_channel: bool = False,
+                        *args, **kwargs):
+        """ Apply denoising to audio wave
+
+         Parameter
+        -------------
+        method: str
+            'nmf' or 'bandpass'
+        all_channel: bool
+            to apply all channel, otherwise to apply only on mono wave
+        """
+        logging.info('noise reduction: {}'.format(method))
+
+        # convert int16 to float32
+        float_waves = [w / pow(2, 15) for w in self.wave_array_np_list]
+        if method == 'nmf':
+            mono = nmf_filter(float_waves[0], frame_rate=self.frame_rate, *args, **kwargs)
+        else:
+            raise ValueError('unknown method: {}}'.format(method))
+
+        denoised_waves = [mono] * len(float_waves)
+
+        # revert float32 to int16
+        self.wave_array_np_list = list(map(lambda w: (w * pow(2, 15)).astype(np.int16), denoised_waves))
+
+        self.if_noise_reduction = True
+
+    def plot(self, path_to_save: str, figure_type: str = 'noise_reduction'):
+        shared = {'wave_data': self.wave_array_np_list_raw[0], 'path_to_save': path_to_save,
+                  'frame_rate': self.frame_rate}
+        if figure_type == 'noise_reduction':
+            assert self.if_noise_reduction, 'noise_reduction is not applied yet'
+            visualize_noise_reduction(wave_data_denoised=self.wave_array_np_list[0], **shared)
+        elif figure_type == 'amplitude_clipping':
+            assert self.if_amplitude_clipping, 'amplitude_clipping is not applied yet'
+            visualize_cutoff_amplitude(self.cutoff_ratio, **shared)
+        else:
+            raise ValueError('unknown figure type: {}'.format(figure_type))
+        logging.info('plot saved at {}'.format(path_to_save))
 
     def export(self, export_file_prefix):
-        assert self.audio_edit is not None, 'no edit file found'
-        return write_file(export_file_prefix=export_file_prefix, audio=self.audio_edit, video=self.video_edit,
-                          audio_format=self.__audio_format, video_format=self.__video_format)
+        if self.if_amplitude_clipping:
+            logging.info('export edited file')
+            return write_file(export_file_prefix=export_file_prefix, audio=self.audio_edit, video=self.video_edit,
+                              audio_format=self.__audio_format, video_format=self.__video_format)
+        elif self.if_noise_reduction:
+            logging.info('export denoised audio as .wav file')
+            wave_signal = self.wave_array_np_list[0] / pow(2, 15)
+            return write_file_wav(
+                export_file_prefix=export_file_prefix, wave_signal=wave_signal, frame_rate=self.frame_rate)
+        else:
+            raise ValueError('no edit file found')
 
     def amplitude_clipping(self,
                            min_interval_sec: float,
@@ -139,10 +194,8 @@ class Editor:
                 assert video
                 logging.info('process video: * {} sub videos'.format(len(video)))
                 self.video_edit = editor.concatenate_videoclips(video)
-
-    @property
-    def is_edited(self):
-        return True if self.audio_edit is not None else False
+        self.cutoff_ratio = cutoff_ratio
+        self.if_amplitude_clipping = True
 
     @property
     def file_identifier(self):

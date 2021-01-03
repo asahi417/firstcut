@@ -2,14 +2,17 @@
 import os
 import subprocess
 import logging
+from typing import List
+import wave
 
+import soundfile as sf
 import numpy as np
 from pydub import AudioSegment
 from moviepy import editor
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
-__all__ = ('combine_audio_video', 'mov_to_mp4', 'load_file', 'write_file')
+__all__ = ('combine_audio_video', 'mov_to_mp4', 'load_file', 'write_file', 'load_file_wav', 'write_file_wav')
 
 
 def exe_shell(command: str, exported_file: str = None):
@@ -97,6 +100,21 @@ def combine_audio_video(video_file: str, audio_file: str, output_file: str):
     command = "ffmpeg -i {} -i {} -vcodec copy {}".format(video_file, audio_file, output_file)
     exe_shell(command, exported_file=output_file)
     assert os.path.exists(output_file), 'file has not produced at {}'.format(output_file)
+
+
+def load_file_wav(file_path):
+    logging.info('load audio from {}'.format(file_path))
+    signal, frame_rate = sf.read(file_path)
+    wave_file = wave.open(file_path, 'r')
+    return signal, frame_rate, wave_file.getsampwidth()
+
+
+def write_file_wav(export_file_prefix: str, wave_signal: List, frame_rate: int):
+    if not export_file_prefix.endswith('.wav'):
+        export_file_prefix = export_file_prefix + '.wav'
+    logging.info('save audio to {}'.format(export_file_prefix))
+    sf.write(export_file_prefix, wave_signal, frame_rate)
+    return export_file_prefix
 
 
 def load_file(file_path):

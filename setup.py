@@ -23,6 +23,7 @@ setup(
         'numpy',
         'cython',
         'matplotlib',
+        'soundfile',
         'pandas',
         'flask',
         'werkzeug',

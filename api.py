@@ -80,7 +80,7 @@ def main():
             editor = firstcut.Editor(path_file, max_sample_length=max_sample)
             editor.amplitude_clipping(min_interval_sec=interval, cutoff_ratio=ratio, crossfade_sec=crossfade)
 
-            if editor.is_edited:
+            if editor.if_amplitude_clipping:
                 msg = 'save tmp folder: {}'.format(TMP_DIR)
                 job_status_instance.update(job_id=job_id, progress=70, status=msg)
                 logging.info(msg)

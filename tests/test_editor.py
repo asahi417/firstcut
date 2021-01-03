@@ -19,13 +19,14 @@ class TestEditor(unittest.TestCase):
     def test(self):
 
         for sample in [sample_mp3, sample_wav, sample_mov, sample_mp4]:
+            basename = os.path.basename(sample).split('.')[0]
             logging.info('process {}'.format(sample))
             editor = firstcut.Editor(sample)
             editor.amplitude_clipping(
                 min_interval_sec=0.1,
                 cutoff_ratio=0.75
             )
-            editor.export('./tests/test_output/test_editor.{}'.format(os.path.basename(sample)))
+            editor.export('./tests/test_output/test_editor.{}'.format(basename))
 
 
 if __name__ == "__main__":

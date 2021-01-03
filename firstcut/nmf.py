@@ -1,8 +1,11 @@
 """ Non-negative Matric Factrization (NMF) """
+import logging
 from typing import List
 
 import numpy as np
 import librosa
+
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 
 EPS = np.spacing(1)
 
@@ -102,11 +105,15 @@ def nmf(y,
             raise ValueError('unknown divergence: {}'.format(div))
         # recomputation of lam
         lam = np.dot(h, u)
+        logging.info('nmf: iter {}: loss {}'.format(i, cost[i]))
     return [h, u, cost]
 
 
 def nmf_filter(y_o: List,
                y_n: List = None,
+               n_iter: int = 500,
+               div: str = "kl",
+               frame_rate: int = None,
                basis_noise_num: int = 20,
                basis_num: int = 20):
     """ NMF based filter
@@ -115,15 +122,21 @@ def nmf_filter(y_o: List,
     """
 
     if y_n is None:
-        y_n = y_o[:int(len(y_o) / 10)]
+        if frame_rate is None:
+            y_n = y_o[:int(len(y_o) / 10)]
+        else:
+            y_n = y_o[:int(frame_rate * 0.8)]
 
+    nmf_shared = {'n_iter': n_iter, 'div': div}
     # training
+    logging.info('nmf on noise reference')
     y_n = librosa.stft(y_n)
-    h_n, u_n, _ = nmf(np.abs(y_n), r=basis_noise_num)
+    h_n, u_n, _ = nmf(np.abs(y_n), r=basis_noise_num, **nmf_shared)
 
     # separation
+    logging.info('nmf on source signal')
     y_o = librosa.stft(y_o)
-    h_o, u_o, _ = nmf(np.abs(y_o), r=basis_noise_num + basis_num, basis_h=h_n)
+    h_o, u_o, _ = nmf(np.abs(y_o), r=basis_noise_num + basis_num, basis_h=h_n, **nmf_shared)
 
     # wiener filter
     y_est = np.dot(h_o, u_o)
