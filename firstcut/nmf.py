@@ -15,7 +15,7 @@ def euclid_divergence(y, yh):
 
 
 def kl_divergence(y, yh):
-    return ((y * np.log(y / (yh + EPS))) - y + yh + EPS).sum()
+    return (y * np.log(np.maximum(y / (yh + EPS), EPS)) - y + yh).sum()
 
 
 def nmf(y,
@@ -24,7 +24,8 @@ def nmf(y,
         div: str = "kl",
         basis_h: (List, np.array) = None,
         init_h: (List, np.array) = None,
-        init_u: (List, np.array) = None):
+        init_u: (List, np.array) = None,
+        display_log: bool = False):
     """ decompose non-negative matrix to components and activation with NMF
 
     y ≈　HU
@@ -105,36 +106,46 @@ def nmf(y,
             raise ValueError('unknown divergence: {}'.format(div))
         # recomputation of lam
         lam = np.dot(h, u)
-        logging.info('nmf: iter {}: loss {}'.format(i, cost[i]))
+        if display_log:
+            logging.info('nmf: iter {}: loss {}'.format(i, cost[i]))
     return [h, u, cost]
 
 
 def nmf_filter(y_o: List,
-               y_n: List = None,
-               n_iter: int = 500,
+               y_n: List,
+               n_iter: int = 50,
                div: str = "kl",
-               frame_rate: int = None,
+               normalize_scale: float = 2,
                basis_noise_num: int = 20,
                basis_num: int = 20):
-    """ NMF based filter
-    y_n: Noise Signal
-    y_o: Original Signal
+    """ NMF based noise reduction filter
+
+     Parameter
+    -----------
+    y_o: List
+        1-d raw signal
+    y_n: List
+        1-d noise reference signal
+    n_iter: int
+        optimization steps at NMF
+    div: str
+        divergence for NMF, `kl` or `euc`
+    normalize_scale: int
+        after NMF denoising, the signal is normalized to avoid having excessive volume by
+            norm = max(denoised_signal) / (normalize_scale * max(y_o))
+            denoised_signal = denoised_signal / norm
     """
 
-    if y_n is None:
-        if frame_rate is None:
-            y_n = y_o[:int(len(y_o) / 10)]
-        else:
-            y_n = y_o[:int(frame_rate * 0.8)]
+    max_amp = np.abs(y_o).max()
 
     nmf_shared = {'n_iter': n_iter, 'div': div}
     # training
-    logging.info('nmf on noise reference')
+    logging.info('nmf on noise reference: {}'.format(len(y_n)))
     y_n = librosa.stft(y_n)
     h_n, u_n, _ = nmf(np.abs(y_n), r=basis_noise_num, **nmf_shared)
 
     # separation
-    logging.info('nmf on source signal')
+    logging.info('nmf on source signal: {}'.format(len(y_o)))
     y_o = librosa.stft(y_o)
     h_o, u_o, _ = nmf(np.abs(y_o), r=basis_noise_num + basis_num, basis_h=h_n, **nmf_shared)
 
@@ -148,4 +159,6 @@ def nmf_filter(y_o: List,
 
     y_sep = np.abs(y_o) ** 2 * y_mask
     y_phase = np.cos(np.angle(y_o) + 1j * np.sin(np.angle(y_o)))
-    return librosa.istft(y_sep * y_phase)
+    y_denoised = librosa.istft(y_sep * y_phase)
+    y_denoised_normalize = y_denoised / np.max(y_denoised) * (max_amp * normalize_scale)
+    return y_denoised_normalize

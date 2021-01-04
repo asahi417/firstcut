@@ -11,10 +11,23 @@ sample_mp3 = './sample_data/vc_1.mp3'
 sample_wav = './sample_data/vc_3.wav'
 sample_mp4 = './sample_data/vc_4.mp4'
 sample_mov = './sample_data/vc_5.mov'
+sample_noise = './sample_data/vc_6.wav'
 
 
 class TestEditor(unittest.TestCase):
     """ Test """
+
+    def test_noise_and_cut(self):
+        basename = os.path.basename(sample_noise).split('.')[0]
+
+        editor = firstcut.Editor(sample_noise)
+        editor.amplitude_clipping()
+        editor.export('./tests/test_output/test_editor.{}'.format(basename))
+
+        editor = firstcut.Editor(sample_noise)
+        editor.noise_reduction()
+        editor.amplitude_clipping()
+        editor.export('./tests/test_output/test_editor.{}.denoised'.format(basename))
 
     def test(self):
 

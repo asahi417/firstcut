@@ -22,6 +22,7 @@ def visualize_cutoff_amplitude(cutoff_amplitude: int,
 
     frame_rate = len(wave_data) if frame_rate is None else frame_rate
     fig = plt.figure(figsize=(6, 12))
+    fig.clear()
 
     # plot wave and the cutoff threshold
     plt.subplot(2, 1, 1)
@@ -58,9 +59,12 @@ def visualize_cutoff_amplitude(cutoff_amplitude: int,
 
 def visualize_noise_reduction(wave_data,
                               wave_data_denoised,
-                              frame_rate,
-                              path_to_save: str = './visualize_noise_reduction.png'):
-    plt.figure(0, figsize=(6, 4))
+                              frame_rate: int,
+                              path_to_save: str):
+    fig = plt.figure(0, figsize=(6, 4))
+    fig.clear()
+    if not path_to_save.endswith('.png'):
+        path_to_save = path_to_save + '.png'
     plt.plot(wave_data)
     plt.plot(wave_data_denoised)
     plt.legend(['source', 'reduced'])
