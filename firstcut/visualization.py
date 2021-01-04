@@ -1,8 +1,42 @@
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 __all__ = ('visualize_cutoff_amplitude', 'visualize_noise_reduction')
+
+
+def visualize_signal(wave_data, frame_rate: float, path_to_save: str = './visualize_cutoff_amplitude.png'):
+
+    fig = plt.figure(figsize=(12, 6))
+    fig.clear()
+
+    # plot wave and the cutoff threshold
+    plt.plot(wave_data)
+    plt.grid()
+
+    length_sec = int(len(wave_data) / frame_rate) + 1
+    interval = min(10, length_sec)
+    ind_1 = np.arange(0, length_sec + 1, int(length_sec / interval))
+    ind_2 = ind_1 * frame_rate
+    plt.title('Signal (sampling rate: {} Hz)'.format(round(frame_rate, 2)))
+    plt.xticks(ind_2, ind_1)
+    plt.xlim([0, len(wave_data)])
+    plt.xlabel("Time: total {} sec.".format(round(len(wave_data) / frame_rate), 2))
+    plt.ylabel("Amplitude")
+
+    # # plot frequency domain
+    #
+    # freq_data = fftpack.fft(wave_data)
+    # freqs = fftpack.fftfreq(len(freq_data)) * frame_rate
+    #
+    # fig, ax = plt.subplot(2, 1, 2)
+    #
+    # ax.stem(freqs, np.abs(freq_data))
+    # ax.set_xlabel('Frequency in Hertz [Hz]')
+    # ax.set_ylabel('Frequency Domain (Spectrum) Magnitude')
+    # ax.set_xlim(-frame_rate / 2, frame_rate / 2)
+    # ax.set_ylim(-5, 110)
+    plt.savefig(path_to_save, bbox_inches='tight')
 
 
 def visualize_cutoff_amplitude(cutoff_amplitude: int,

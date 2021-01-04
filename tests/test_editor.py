@@ -17,6 +17,12 @@ sample_noise = './sample_data/vc_6.wav'
 class TestEditor(unittest.TestCase):
     """ Test """
 
+    def test_vis(self):
+        basename = os.path.basename(sample_wav).split('.')[0]
+        editor = firstcut.Editor(sample_wav)
+        editor.plot(figure_type='signal',
+                    path_to_save='./tests/test_output/test_editor.{}.png'.format(basename))
+
     def test_noise_and_cut(self):
         basename = os.path.basename(sample_noise).split('.')[0]
 

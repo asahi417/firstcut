@@ -10,7 +10,7 @@ from moviepy import editor
 from .nmf import nmf_filter
 from .cutoff_amplitude import get_cutoff_amplitude
 from .util import write_file, load_file, write_file_wav
-from .visualization import visualize_noise_reduction, visualize_cutoff_amplitude
+from .visualization import visualize_noise_reduction, visualize_cutoff_amplitude, visualize_signal
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 __all__ = 'Editor'
@@ -63,7 +63,7 @@ class Editor:
         self.if_noise_reduction = False
         self.if_amplitude_clipping = False
 
-    def plot(self, path_to_save: str, figure_type: str = 'noise_reduction'):
+    def plot(self, path_to_save: str, figure_type: str = 'signal'):
         shared = {'wave_data': self.wave_array_np_list_raw[0], 'path_to_save': path_to_save,
                   'frame_rate': self.frame_rate}
         if figure_type == 'noise_reduction':
@@ -72,6 +72,8 @@ class Editor:
         elif figure_type == 'amplitude_clipping':
             assert self.if_amplitude_clipping, 'amplitude_clipping is not applied yet'
             visualize_cutoff_amplitude(self.cutoff_ratio, **shared)
+        elif figure_type == 'signal':
+            visualize_signal(**shared)
         else:
             raise ValueError('unknown figure type: {}'.format(figure_type))
         logging.info('plot saved at {}'.format(path_to_save))
