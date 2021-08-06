@@ -233,6 +233,10 @@ def write_file(export_file_prefix: str,
         logging.info('embed audio to video, and save to {}'.format(video_file))
 
         combine_audio_video(video_file=video_file_mute, audio_file=audio_file, output_file=video_file)
+        logging.info('delete tmp files {}'.format(video_file, audio_file))
+        os.remove(video_file_mute)
+        os.remove(audio_file)
+
         return video_file
     else:
         return audio_file

@@ -14,19 +14,6 @@ sample_wav = './sample_data/vc_3.wav'
 class TestCut(unittest.TestCase):
     """ Test """
 
-    def test(self):
-        audio_stats, video_stats = firstcut.load_file(sample_mp3)
-        (audio, wave_array_np_list, audio_format, frame_rate, sample_width, channels) = audio_stats
-
-        p = 0.99
-        c = firstcut.get_cutoff_amplitude(wave_array_np_list[0], cutoff_ratio=p)
-        logging.info('get_cutoff_amplitude: {} ({} ratio)'.format(c, p))
-        basename = os.path.basename(sample_mp3).split('.')[0]
-        firstcut.visualize_cutoff_amplitude(
-            c, wave_array_np_list[0],
-            frame_rate=frame_rate,
-            path_to_save='./tests/test_output/test_cutoff.{}.png'.format(basename))
-
     def test_editor(self):
         basename = os.path.basename(sample_wav).split('.')[0]
         editor = firstcut.Editor(sample_wav)

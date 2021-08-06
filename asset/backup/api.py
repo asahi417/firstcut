@@ -15,7 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 # CONFIG
-TMP_DIR = './tmp'  # directory where audio/video files are temporarily stored
+TMP_DIR = '../../tmp'  # directory where audio/video files are temporarily stored
 KEEP_LOG_SEC = int(os.getenv('KEEP_LOG_SEC', '180'))
 PORT = int(os.getenv("PORT", "8008"))
 FIREBASE_SERVICE_ACCOUNT = os.getenv('FIREBASE_SERVICE_ACCOUNT', None)
@@ -145,10 +145,8 @@ def main():
         logging.info(' * parameter `cutoff_ratio`: {}'.format(cutoff_ratio))
 
         # parameter
-        max_sample_length = post_body.get('max_sample_length', '30000000')
+        max_sample_length = post_body.get('max_sample_length', None)
         max_sample_length, msg = firstcut.validate_numeric(max_sample_length, 0, 30000000)
-        if max_sample_length is None:
-            return BadRequest(msg)
         logging.info(' * parameter `max_sample_length`: {}'.format(max_sample_length))
 
         # parameter

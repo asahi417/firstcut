@@ -4,13 +4,11 @@ Audio/video editor: detecting silent interval and eliminated them from the origi
 - API service
 
 ## Get started
-### Commandline
-- Mac OS
 ```shell script
 git clone https://github.com/asahi417/firstcut
 cd firstcut
+pip install .
 ```
-- Linux
 
 ## API Service
 - ***Build with docker composer***
@@ -19,8 +17,8 @@ cd firstcut
 docker-compose -f docker-compose.yml up
 ```
 
-The app runs with firebase backend, so requires [firebase credentials](FIREBASE.md).
-To deploy the image to gcp project, see [here](DEPLOY_GCP.md).
+The app runs with firebase backend, so requires [firebase credentials](asset/backup/FIREBASE.md).
+To deploy the image to gcp project, see [here](asset/backup/DEPLOY_GCP.md).
 
 - ***Commandline***
 On mac OS, 
@@ -28,7 +26,7 @@ On mac OS,
 brew install llvm@9
 brew install ffmpeg
 pip install .
-python api.py
+uvicorn app:app --reload
 ```
 while Linux, 
 
@@ -36,35 +34,32 @@ while Linux,
 apt-get install llvm@9
 apt-get install ffmpeg
 pip install .
-python api.py
+uvicorn app:app --reload
 ``` 
 
 Configuration can be changed via environment variables. 
 
 | Environment variable name  | Default | Description                                                                                         |
 | -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| **PORT**                   | `8008`  | port to host the server on                                                                          |
-| **TMP_DIR**                | `./tmp` | directory where the files to be saved |
-| **FIREBASE_SERVICE_ACOUNT**|         | service credential |
-| **FIREBASE_APIKEY**        |         | apiKey |
-| **FIREBASE_AUTHDOMAIN**    |         | authDomain |
-| **FIREBASE_DATABASEURL**   |         | databaseURL |
-| **FIREBASE_STORAGEBUCKET** |         | storageBucket |
-| **FIREBASE_GMAIL**         |         | Gmail account registered to Firebase |
-| **FIREBASE_PASSWORD**      |         | password for the Gmail account |
+| **PORT**                   | `8008`  | port number |
+| **KEEP_LOG_SEC**           | `1800`  | time to keep the job id after completed or failed                                                                          |
+| **MAX_SAMPLE_LENGTH**      |`30000000`| max sample length to process                                                                          |
 
-
-### `audio_clip`
-- Description: POST API to clip audio/video.
+### `edit`
+- Description: POST API to remove silent parts from audio/video.
 - Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`
 - Parameters:
 
 | Parameter name                            | Default              | Description                           |
 | ----------------------------------------- | -------------------- | ------------------------------------- |
-| **file_name**<br />_(\* required)_        |  -                   | file name to be processed on firebase |
+| **file_path**<br />_(\* required)_        |  -                   | file path to the audio/video |
+| **export_path**                           | None                 | path to export processed file (if not given, the processed file is saved at `{file_path}.firstcut.{job_id}`) |
 | **min_interval_sec**                      | 0.12                 | minimum interval of part to exclude (sec) |
 | **cutoff_ratio**                          | 0.9                  | cutoff ratio from 0 to 1 |
 | **crossfade_sec**                         | 0.1                  | crossfade interval |
+| **apply_noise_reduction**                 | false                | apply noise reduction before editing |
+| **max_interval_ratio**                    | 0.15                 | parameter for noise reduction |
+| **n_iter**                                | 1                    | parameter for noise reduction |
  
 - Return:
 
@@ -72,9 +67,52 @@ Configuration can be changed via environment variables.
 | ---------- | ----------------------------------------------- |
 | **job_id** | unique job id  |
 
-Progress of process for the given audio file can be checked by calling `job_status`. 
+The progress of the file can be checked by calling `job_status`.
 
-### `job_status`
+
+### `denoise`
+- Description: POST API to perform noise reduction on audio/video.
+- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`
+- Parameters:
+
+| Parameter name                            | Default              | Description                           |
+| ----------------------------------------- | -------------------- | ------------------------------------- |
+| **file_path**<br />_(\* required)_        |  -                   | file path to the audio/video |
+| **export_path**                           | None                 | path to export processed file (if not given, the processed file is saved at `{file_path}.firstcut.{job_id}`) |
+| **min_interval_sec**                      | 0.12                 | minimum interval of part to exclude (sec) |
+| **cutoff_ratio**                          | 0.9                  | cutoff ratio from 0 to 1 |
+| **max_interval_ratio**                    | 0.15                 | parameter for noise reduction |
+| **n_iter**                                | 1                    | parameter for noise reduction |
+ 
+- Return:
+
+| Name       | Description                                     |
+| ---------- | ----------------------------------------------- |
+| **job_id** | unique job id  |
+
+The progress of the file can be checked by calling `job_status`.
+
+
+### `compress`
+- Description: POST API to reduce file size of audio/video.
+- Valid file format: `['mp3', 'wav', 'm4a', 'mp4', 'mov']`
+- Parameters:
+
+| Parameter name                            | Default              | Description                           |
+| ----------------------------------------- | -------------------- | ------------------------------------- |
+| **file_path**<br />_(\* required)_        |  -                   | file path to the audio/video |
+| **export_path**                           | None                 | path to export processed file (if not given, the processed file is saved at `{file_path}.firstcut.{job_id}`) |
+ 
+- Return:
+
+| Name       | Description                                     |
+| ---------- | ----------------------------------------------- |
+| **job_id** | unique job id  |
+
+The progress of the file can be checked by calling `job_status`.
+
+
+### `show_jobs`
 - Description: GET API for job status
 - Parameters:
 
@@ -90,7 +128,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | **progress**        | progress percentage from 0 up to 100 |
 | **status_code**     | `{'1': job in progress, '-1': error, '0': job_completed}` |
 | **elapsed_time**    | elapsed time after starting process |
-| **url**             | url for processed file (provided only the job has been completed) |
 | **file_name**       | processed file name |
 
 
@@ -101,30 +138,6 @@ Progress of process for the given audio file can be checked by calling `job_stat
 | return name         | Description     |
 | ------------------- | --------------- |
 | **job_ids**         | list of job ids |
-
-
-### `drop_job_status`
-- Description: GET API to drop completed job status. Server will keep all the job status, unless you request this method. 
-- Return:
-
-| return name         | Description    |
-| ------------------- | -------------- |
-| **status**          | status message |
-
-### `drop_file_firebase`
-- Description: GET API to remove file on firebase 
-- Parameters:
-
-| Parameter name   | Default | Description                                                                         |
-| ---------------- | ------- | ----------------------------------------------------------------------------------- |
-| **file_name**    |         | file name to remove, if not provided, remove all the files (`all` to remove all files) |
-
-
-- Return:
-
-| return name         | Description           |
-| ------------------- | --------------------- |
-| **removed_files**   | list of removed files |
 
 
 ## Python interface

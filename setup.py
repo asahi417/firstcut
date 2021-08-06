@@ -25,13 +25,13 @@ setup(
         'matplotlib',
         'soundfile',
         'pandas',
-        'flask',
-        'werkzeug',
+        'fastapi',  # app
+        'uvicorn',
+        'pydantic',
         'urllib3',
         'moviepy',
-        'pyrebase',
-        'flask_cors',
-        'pydub'
+        'pydub',
+        'seaborn'
     ]
 )
 

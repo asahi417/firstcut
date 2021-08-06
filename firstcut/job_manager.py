@@ -4,41 +4,6 @@ import random
 from time import time
 
 
-def validate_numeric(value, min_val, max_val, is_float=False):
-    """ Validate numeric variable (for API parameter validation)
-
-     Parameter
-    ---------------
-    value: str
-        string value
-    default: numeric
-        default value if given value is None or ""
-    min_val: numeric
-        numeric value for minimum value
-    max_val: numeric
-        numeric value for maximum value
-    is_float: bool
-        use `float` if True else `int`
-
-     Return
-    ---------------
-    value:
-    error_message:
-    """
-    # value = default if value == '' or value is None else value
-    assert type(value) in [str, int, float], 'value should be either str/int/float'
-    assert type(min_val) in [int, float] and type(max_val) in [int, float], 'min_val/max_val should be numeric'
-    try:
-        value = float(value) if is_float else int(value)
-    except ValueError:
-        return None, 'wrong type'.format(value)
-
-    if value > max_val or value < min_val:
-        return None, 'value {} is out of range {} < {}'.format(value, min_val, max_val)
-
-    return value, ''
-
-
 class Status:
     """ API job monitoring: status_code = {'1': job in progress, '-1': error, '0': job_completed} """
 

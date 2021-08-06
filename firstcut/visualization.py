@@ -1,46 +1,17 @@
 import numpy as np
+# import seaborn as sns
 from matplotlib import pyplot as plt
-
+"""
+TODO: prettify the graphs
+"""
+# sns.set_style("darkgrid")
 
 __all__ = ('visualize_cutoff_amplitude', 'visualize_noise_reduction')
 
 
-def visualize_signal(wave_data, frame_rate: float, path_to_save: str = './visualize_cutoff_amplitude.png'):
-
-    fig = plt.figure(figsize=(12, 6))
-    fig.clear()
-
-    # plot wave and the cutoff threshold
-    plt.plot(wave_data)
-    plt.grid()
-
-    length_sec = int(len(wave_data) / frame_rate) + 1
-    interval = min(10, length_sec)
-    ind_1 = np.arange(0, length_sec + 1, int(length_sec / interval))
-    ind_2 = ind_1 * frame_rate
-    plt.title('Signal (sampling rate: {} Hz)'.format(round(frame_rate, 2)))
-    plt.xticks(ind_2, ind_1)
-    plt.xlim([0, len(wave_data)])
-    plt.xlabel("Time: total {} sec.".format(round(len(wave_data) / frame_rate), 2))
-    plt.ylabel("Amplitude")
-
-    # # plot frequency domain
-    #
-    # freq_data = fftpack.fft(wave_data)
-    # freqs = fftpack.fftfreq(len(freq_data)) * frame_rate
-    #
-    # fig, ax = plt.subplot(2, 1, 2)
-    #
-    # ax.stem(freqs, np.abs(freq_data))
-    # ax.set_xlabel('Frequency in Hertz [Hz]')
-    # ax.set_ylabel('Frequency Domain (Spectrum) Magnitude')
-    # ax.set_xlim(-frame_rate / 2, frame_rate / 2)
-    # ax.set_ylim(-5, 110)
-    plt.savefig(path_to_save, bbox_inches='tight')
-
-
-def visualize_cutoff_amplitude(cutoff_amplitude: int,
-                               wave_data,
+def visualize_cutoff_amplitude(wave_data,
+                               cutoff_ratio,
+                               cutoff_amplitude,
                                frame_rate: float = None,
                                path_to_save: str = './visualize_cutoff_amplitude.png'):
     """ Visualize cutoff amplitude
@@ -61,8 +32,11 @@ def visualize_cutoff_amplitude(cutoff_amplitude: int,
     # plot wave and the cutoff threshold
     plt.subplot(2, 1, 1)
     plt.plot(wave_data)
-    plt.plot([cutoff_amplitude] * len(wave_data), color='red', linestyle='--')
-    plt.legend(['signal', 'cutoff'])
+
+    for i in cutoff_amplitude:
+        plt.plot([i] * len(wave_data), linestyle='--')
+        # plt.plot([i] * len(wave_data), color='red', linestyle='--')
+    plt.legend(['signal'] + ['cutoff ({} %)'.format(100 * i) for i in cutoff_ratio])
     plt.grid()
 
     length_sec = int(len(wave_data) / frame_rate) + 1
@@ -80,8 +54,10 @@ def visualize_cutoff_amplitude(cutoff_amplitude: int,
     plt.xticks(rotation=45)
     amp_sorted = np.sort(np.abs(wave_data))
     plt.plot(amp_sorted)
-    plt.plot([cutoff_amplitude] * len(wave_data), color='red', linestyle='--')
-    plt.legend(['signal', 'cutoff'])
+    for i in cutoff_amplitude:
+        plt.plot([i] * len(wave_data), linestyle='--')
+        # plt.plot([i] * len(wave_data), color='red', linestyle='--')
+    plt.legend(['signal'] + ['cutoff ({} %)'.format(100 * i) for i in cutoff_ratio])
     plt.grid()
     plt.title('Samples sorted by amplitude')
     plt.xlim([0, len(wave_data)])
