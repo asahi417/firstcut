@@ -97,7 +97,7 @@ def main():
                 msg = 'clean local storage: {}'.format(to_clean)
                 logging.info(msg)
                 job_status_instance.update(job_id=job_id, progress=95, status=msg)
-                os.system('rm -rf {}'.format(to_clean))
+                # os.system('rm -rf {}'.format(to_clean))
             else:
                 url = '' if firebase is None else firebase.get_url(file_name)
             # update job status
@@ -145,8 +145,8 @@ def main():
         logging.info(' * parameter `cutoff_ratio`: {}'.format(cutoff_ratio))
 
         # parameter
-        max_sample_length = post_body.get('max_sample_length ', '1200000')
-        max_sample_length, msg = firstcut.validate_numeric(max_sample_length, 0, 1200000)
+        max_sample_length = post_body.get('max_sample_length', '30000000')
+        max_sample_length, msg = firstcut.validate_numeric(max_sample_length, 0, 30000000)
         if max_sample_length is None:
             return BadRequest(msg)
         logging.info(' * parameter `max_sample_length`: {}'.format(max_sample_length))
