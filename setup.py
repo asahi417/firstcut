@@ -31,7 +31,8 @@ setup(
         'urllib3',
         'moviepy',
         'pydub',
-        'seaborn'
+        'seaborn',
+        'librosa'
     ]
 )
 

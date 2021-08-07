@@ -10,7 +10,6 @@ COPY . /opt/app
 
 
 ARG KEEP_LOG_SEC=1800
-ARG PORT=8000
 ARG MAX_SAMPLE_LENGTH=30000000
 ENV KEEP_LOG_SEC=${KEEP_LOG_SEC} \
     MAX_SAMPLE_LENGTH=${MAX_SAMPLE_LENGTH}
@@ -18,6 +17,6 @@ ENV KEEP_LOG_SEC=${KEEP_LOG_SEC} \
 RUN pip install pip -U
 RUN pip install --no-cache-dir .
 
-EXPOSE ${PORT}
+EXPOSE 8000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
