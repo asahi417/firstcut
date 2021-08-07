@@ -28,7 +28,7 @@ class Editor:
     - (ii) process separately
     - (iii) combine `pydub.AudioSegment` for audio interface, and `moviepy.editor` for movie interface """
 
-    def __init__(self, file_path: str, max_sample_length: int = None):
+    def __init__(self, file_path: str, max_sample_length: int = None, min_clip_sec: float = 0.01):
         """ Core audio/video editor
 
          Parameter
@@ -38,6 +38,7 @@ class Editor:
         max_sample_length: int
             set a max sample length (to avoid being clogged by extremely long audio file)
         """
+        self.min_clip_sec = min_clip_sec
         self.file_path = file_path
         audio_stats, video_stats = load_file(self.file_path)
         (self.audio, self.wave_array_np_list, self.__audio_format, self.frame_rate, self.sample_width, self.channels) \
@@ -220,14 +221,18 @@ class Editor:
             cf_sec = min((len(audio) + start - pointer) / 1000, cf_sec)  # clip cf smaller than tmp audio
             cf_sec = min((self.length_sec - end) / 1000, cf_sec)  # clip cf smaller than remaining audio
             cf_sec = 0 if cf_sec < 0.001 else cf_sec  # clip too small value
-            audio = audio.append(self.audio[(pointer - prev_cf_sec) * 1000:(start + cf_sec) * 1000],
-                                 crossfade=prev_cf_sec * 1000)
-            if self.video is not None:
-                video.append(self.video.subclip(pointer - prev_cf_sec / 2, start + cf_sec / 2))
-            prev_cf_sec = cf_sec
-            pointer = end
+            # skip if the subclip is too short
+            if abs((pointer - prev_cf_sec) - (start + cf_sec)) > self.min_clip_sec:
+                audio = audio.append(self.audio[(pointer - prev_cf_sec) * 1000:(start + cf_sec) * 1000],
+                                     crossfade=prev_cf_sec * 1000)
+                if self.video is not None:
+                    video.append(self.video.subclip(pointer - prev_cf_sec / 2, start + cf_sec / 2))
 
-        if pointer != self.length_sec:
+                prev_cf_sec = cf_sec
+                pointer = end
+
+        if abs(pointer - self.length_sec) > self.min_clip_sec:
+        # if pointer != self.length_sec:
             audio = audio.append(self.audio[(pointer - prev_cf_sec) * 1000:self.length_sec * 1000],
                                  crossfade=prev_cf_sec * 1000)
             if self.video is not None:

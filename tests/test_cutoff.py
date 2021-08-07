@@ -18,9 +18,7 @@ class TestCut(unittest.TestCase):
         basename = os.path.basename(sample_wav).split('.')[0]
         editor = firstcut.Editor(sample_wav)
         editor.amplitude_clipping(min_interval_sec=0.12, cutoff_ratio=0.99)
-        editor.plot(
-            figure_type='amplitude_clipping',
-            path_to_save='./tests/test_output/test_cutoff.{}.png'.format(basename))
+        editor.plot_wave(path_to_save='./tests/test_output/test_cutoff.{}.png'.format(basename))
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ class CompressInput(BaseModel):
 
 
 class DenoiseInput(CompressInput):
-    min_interval_sec: float = 0.125
+    min_interval_sec: float = 0.15
     cutoff_ratio: float = 0.85
     max_interval_ratio: int = 0.15
     n_iter: int = 1
